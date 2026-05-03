@@ -2,12 +2,16 @@ const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
   "https://signal.lab";
 
+export function articlePath(slug: string): string {
+  return `/insights/${slug}`;
+}
+
 export function canonicalFor(path: string): string {
   return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 export function articleCanonical(slug: string): string {
-  return canonicalFor(`/insights/${slug}`);
+  return canonicalFor(articlePath(slug));
 }
 
 export function teaserCanonical(slug: string): string {

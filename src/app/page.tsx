@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getPublishedArticles } from "@/lib/articles";
-import { articleCanonical } from "@/lib/canonical";
+import { articlePath } from "@/lib/canonical";
 
 export const metadata: Metadata = {
   title: "Signal.lab - Expert Knowledge for Humans and Machines",
@@ -52,7 +52,7 @@ export default async function HomePage() {
           <ul className="space-y-8">
             {articles.map((article) => (
               <li key={article.id} className="border-b border-gray-100 pb-8">
-                <a href={articleCanonical(article.slug)} className="block group">
+                <a href={articlePath(article.slug)} className="block group">
                   <h3 className="text-xl font-semibold group-hover:text-blue-600 mb-2">
                     {article.headline}
                   </h3>

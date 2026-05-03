@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { getArticleBySlug, getPublishedArticles } from "@/lib/articles";
-import { articleCanonical } from "@/lib/canonical";
+import { articleCanonical, articlePath } from "@/lib/canonical";
 import { logRequestEventFromHeaders } from "@/lib/log-event";
 import { pageMetadata } from "@/lib/metadata";
 
@@ -70,7 +70,7 @@ export default async function TeaserPage({ params }: Props) {
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
         <p className="text-gray-500 mb-4">Read the full article on Signal.lab</p>
         <a
-          href={articleCanonical(slug)}
+          href={articlePath(slug)}
           className="inline-block bg-blue-600 text-white px-5 py-2 rounded-lg font-medium hover:bg-blue-700"
         >
           Read Full Article

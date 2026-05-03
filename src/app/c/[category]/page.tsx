@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { getArticlesByCategory, getPublishedArticles } from "@/lib/articles";
-import { articleCanonical } from "@/lib/canonical";
+import { articlePath } from "@/lib/canonical";
 import { logRequestEventFromHeaders } from "@/lib/log-event";
 import { pageMetadata } from "@/lib/metadata";
 
@@ -62,7 +62,7 @@ export default async function CategoryPage({ params }: Props) {
       <ul className="space-y-8">
         {articles.map((article) => (
           <li key={article.id} className="border-b border-gray-100 pb-8">
-            <a href={articleCanonical(article.slug)} className="group block">
+            <a href={articlePath(article.slug)} className="group block">
               <h2 className="text-xl font-semibold group-hover:text-blue-600 mb-1">
                 {article.headline}
               </h2>
