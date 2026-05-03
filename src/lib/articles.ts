@@ -1,8 +1,11 @@
-import { supabaseAnon } from "./supabase-anon";
+import { getSupabaseAnonClient } from "./supabase-anon";
 import type { Article } from "@/types";
 
 export async function getPublishedArticles(): Promise<Article[]> {
-  const { data, error } = await supabaseAnon
+  const client = getSupabaseAnonClient();
+  if (!client) return [];
+
+  const { data, error } = await client
     .from("articles")
     .select("*")
     .eq("status", "published")
@@ -16,7 +19,10 @@ export async function getPublishedArticles(): Promise<Article[]> {
 }
 
 export async function getArticleBySlug(slug: string): Promise<Article | null> {
-  const { data, error } = await supabaseAnon
+  const client = getSupabaseAnonClient();
+  if (!client) return null;
+
+  const { data, error } = await client
     .from("articles")
     .select("*")
     .eq("slug", slug)
@@ -28,7 +34,10 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
 }
 
 export async function getArticlesByCategory(category: string): Promise<Article[]> {
-  const { data, error } = await supabaseAnon
+  const client = getSupabaseAnonClient();
+  if (!client) return [];
+
+  const { data, error } = await client
     .from("articles")
     .select("*")
     .eq("status", "published")
@@ -40,7 +49,10 @@ export async function getArticlesByCategory(category: string): Promise<Article[]
 }
 
 export async function searchArticles(q: string): Promise<Article[]> {
-  const { data, error } = await supabaseAnon
+  const client = getSupabaseAnonClient();
+  if (!client) return [];
+
+  const { data, error } = await client
     .from("articles")
     .select("*")
     .eq("status", "published")
