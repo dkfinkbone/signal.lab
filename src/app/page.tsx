@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { getPublishedArticles } from "@/lib/articles";
 import { articlePath } from "@/lib/canonical";
+import { logRequestEventFromHeaders } from "@/lib/log-event";
 
 export const metadata: Metadata = {
   title: "Signal.lab - Expert Knowledge for Humans and Machines",
@@ -12,6 +14,13 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const articles = await getPublishedArticles();
   const categories = [...new Set(articles.map((a) => a.category).filter(Boolean))];
+
+  await logRequestEventFromHeaders({
+    headers: await headers(),
+    path: "/",
+    routeType: "home",
+    statusCode: 200,
+  });
 
   return (
     <>

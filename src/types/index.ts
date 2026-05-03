@@ -36,12 +36,16 @@ export interface RequestEvent {
 }
 
 export type RouteType =
+  | "home"
   | "insights_index"
   | "insights_article"
   | "teaser"
   | "category"
   | "agent_read"
-  | "search";
+  | "search"
+  | "llms"
+  | "robots"
+  | "sitemap";
 
 export type BotFamily =
   | "GPTBot"

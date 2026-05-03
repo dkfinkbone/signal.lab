@@ -29,6 +29,9 @@ export default async function AttributionDashboard() {
   ]);
 
   const events: RequestEvent[] = latestRes.data ?? [];
+  const knownBotEvents = events.filter(
+    (event) => event.bot_family && event.bot_family !== "unknown"
+  );
 
   // Fallback: compute from events array if RPCs not available yet
   const botCounts: Record<string, number> = {};
@@ -59,11 +62,19 @@ export default async function AttributionDashboard() {
       <h1 className="text-2xl font-bold mb-8">Attribution Dashboard</h1>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-4 mb-10">
+      <div className="grid grid-cols-4 gap-4 mb-10">
         <StatCard label="Events (shown)" value={events.length} />
+        <StatCard label="Known Bot Hits" value={knownBotEvents.length} />
         <StatCard label="Unique Bots" value={botRows.length} />
         <StatCard label="Unique Slugs" value={slugRows.length} />
       </div>
+
+      {knownBotEvents.length === 0 && (
+        <div className="mb-10 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          No recognized crawler hits yet. Current events are regular browser traffic or
+          requests with unknown user agents.
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-8 mb-10">
         {/* By bot family */}
@@ -155,6 +166,59 @@ export default async function AttributionDashboard() {
         </div>
       </section>
 
+      {/* Latest bot events */}
+      <section className="mb-10">
+        <h2 className="font-semibold mb-3 text-sm uppercase tracking-wider text-gray-500">
+          Latest Recognized Bot Events
+        </h2>
+        <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="bg-gray-50 border-b">
+              <tr>
+                <th className="text-left px-3 py-2 font-medium text-gray-600">Time</th>
+                <th className="text-left px-3 py-2 font-medium text-gray-600">Bot</th>
+                <th className="text-left px-3 py-2 font-medium text-gray-600">Path</th>
+                <th className="text-left px-3 py-2 font-medium text-gray-600">Referrer</th>
+                <th className="text-left px-3 py-2 font-medium text-gray-600">User Agent</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {knownBotEvents.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-3 py-6 text-center text-gray-400">
+                    No recognized bot events logged yet.
+                  </td>
+                </tr>
+              )}
+              {knownBotEvents.slice(0, 20).map((event) => (
+                <tr key={event.id} className="hover:bg-gray-50">
+                  <td className="px-3 py-2 text-gray-400 whitespace-nowrap">
+                    {new Date(event.created_at).toLocaleString("en-GB", {
+                      timeStyle: "short",
+                      dateStyle: "short",
+                    })}
+                  </td>
+                  <td className="px-3 py-2">
+                    <span className="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded text-xs">
+                      {event.bot_family}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 font-mono text-gray-700 max-w-xs truncate">
+                    {event.path}
+                  </td>
+                  <td className="px-3 py-2 text-gray-500 max-w-xs truncate">
+                    {event.referrer || "-"}
+                  </td>
+                  <td className="px-3 py-2 text-gray-500 max-w-sm truncate" title={event.user_agent || ""}>
+                    {event.user_agent || "-"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       {/* Latest 100 events */}
       <section>
         <h2 className="font-semibold mb-3 text-sm uppercase tracking-wider text-gray-500">
@@ -168,13 +232,14 @@ export default async function AttributionDashboard() {
                 <th className="text-left px-3 py-2 font-medium text-gray-600">Route</th>
                 <th className="text-left px-3 py-2 font-medium text-gray-600">Path</th>
                 <th className="text-left px-3 py-2 font-medium text-gray-600">Bot</th>
+                <th className="text-left px-3 py-2 font-medium text-gray-600">User Agent</th>
                 <th className="text-left px-3 py-2 font-medium text-gray-600">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {events.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-3 py-6 text-center text-gray-400">
+                  <td colSpan={6} className="px-3 py-6 text-center text-gray-400">
                     No events logged yet. Visit a public route to generate events.
                   </td>
                 </tr>
@@ -194,6 +259,9 @@ export default async function AttributionDashboard() {
                     ) : (
                       <span className="text-gray-400">human</span>
                     )}
+                  </td>
+                  <td className="px-3 py-2 text-gray-500 max-w-sm truncate" title={e.user_agent || ""}>
+                    {e.user_agent || "-"}
                   </td>
                   <td className="px-3 py-2 text-gray-500">{e.status_code}</td>
                 </tr>

@@ -1,12 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getPublishedArticles } from "@/lib/articles";
 import { articleCanonical, agentReadCanonical } from "@/lib/canonical";
+import { logRequestEvent } from "@/lib/log-event";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://signal.lab";
   const articles = await getPublishedArticles();
+
+  await logRequestEvent({ req, routeType: "llms", statusCode: 200 });
 
   const lines: string[] = [
     "# Signal.lab — LLM Navigation Map",
