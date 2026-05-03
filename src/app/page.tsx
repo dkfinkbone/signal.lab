@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import Link from "next/link";
 import { getPublishedArticles } from "@/lib/articles";
 import { articlePath } from "@/lib/canonical";
 import { logRequestEventFromHeaders } from "@/lib/log-event";
@@ -30,6 +31,26 @@ export default async function HomePage() {
           Expert knowledge nodes - crawlable, attributable, and machine-readable.
           Built for search engines, LLM agents, and human readers alike.
         </p>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link
+            href="/insights"
+            className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            Browse Insights
+          </Link>
+          <Link
+            href="/admin/dashboard"
+            className="inline-flex items-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Open Attribution Dashboard
+          </Link>
+          <Link
+            href="/admin"
+            className="inline-flex items-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Open Admin
+          </Link>
+        </div>
       </section>
 
       {categories.length > 0 && (
