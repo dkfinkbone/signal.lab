@@ -1,40 +1,35 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import Link from "next/link";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "signal.lab | Personal IP Knowledge Hub",
-  description: "Publish your expertise and relationships to the semantic web. Optimized for LLMs and AI Agents.",
+  title: { default: "Signal.lab", template: "%s | Signal.lab" },
+  description: "Agent-readable publishing platform for expert knowledge nodes.",
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body>
-        <nav className="navbar">
-          <div className="container flex-between">
-            <a href="/" className="brand">signal<span>.lab</span></a>
-            <div style={{ display: 'flex', gap: '16px' }}>
-              <a href="/dashboard" className="btn-glass" style={{ padding: '8px 16px', fontSize: '0.9rem' }}>Dashboard</a>
-              <a href="/login" className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.9rem' }}>Sign In</a>
-            </div>
-          </div>
-        </nav>
-        {children}
+    <html lang="en">
+      <body className="min-h-screen bg-white text-gray-900 antialiased">
+        <header className="border-b border-gray-100 py-4 px-6">
+          <nav className="max-w-4xl mx-auto flex gap-6 text-sm font-medium">
+            <Link href="/" className="text-gray-900 hover:text-blue-600">
+              Signal.lab
+            </Link>
+            <Link href="/insights" className="text-gray-600 hover:text-blue-600">
+              Insights
+            </Link>
+          </nav>
+        </header>
+        <main className="max-w-4xl mx-auto px-6 py-10">{children}</main>
+        <footer className="border-t border-gray-100 py-6 px-6 text-center text-xs text-gray-400">
+          (c) {new Date().getFullYear()} Signal.lab | Knowledge for humans and machines
+        </footer>
       </body>
     </html>
   );
