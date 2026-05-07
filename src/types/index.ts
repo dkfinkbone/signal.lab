@@ -37,6 +37,9 @@ export interface RequestEvent {
 
 export type RouteType =
   | "home"
+  | "about"
+  | "project"
+  | "project_gated"
   | "insights_index"
   | "insights_article"
   | "teaser"

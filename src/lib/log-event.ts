@@ -26,6 +26,13 @@ interface HeaderLogOptions {
   queryParams?: URLSearchParams | Record<string, string | string[] | undefined> | null;
 }
 
+const SENSITIVE_QUERY_KEYS = new Set([
+  "token",
+  "access_token",
+  "refresh_token",
+  "code",
+]);
+
 function extractRawIp(headers: HeaderSource): string | null {
   return (
     headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
@@ -43,10 +50,13 @@ function normalizeQueryParams(
 
   if (queryParams instanceof URLSearchParams) {
     queryParams.forEach((value, key) => {
+      if (SENSITIVE_QUERY_KEYS.has(key.toLowerCase())) return;
       normalized[key] = value;
     });
   } else {
     for (const [key, value] of Object.entries(queryParams)) {
+      if (SENSITIVE_QUERY_KEYS.has(key.toLowerCase())) continue;
+
       if (Array.isArray(value)) {
         if (value[0]) normalized[key] = value[0];
       } else if (typeof value === "string" && value) {

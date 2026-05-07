@@ -1,6 +1,31 @@
 import type { Metadata } from "next";
+import {
+  DM_Mono,
+  DM_Serif_Display,
+  Instrument_Sans,
+} from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
+
+const dmSerif = DM_Serif_Display({
+  subsets: ["latin"],
+  weight: ["400"],
+  style: ["normal", "italic"],
+  variable: "--font-dm-serif",
+});
+
+const dmMono = DM_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-dm-mono",
+});
+
+const instrument = Instrument_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-instrument",
+});
 
 export const metadata: Metadata = {
   title: { default: "Signal.lab", template: "%s | Signal.lab" },
@@ -15,7 +40,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-white text-gray-900 antialiased">
+      <body
+        className={`${dmSerif.variable} ${dmMono.variable} ${instrument.variable} min-h-screen bg-white text-gray-900 antialiased`}
+      >
         <header className="border-b border-gray-100 py-4 px-6">
           <nav className="max-w-4xl mx-auto flex items-center justify-between gap-6 text-sm font-medium">
             <Link href="/" className="text-gray-900 hover:text-blue-600">
@@ -24,6 +51,12 @@ export default function RootLayout({
             <div className="flex flex-wrap items-center gap-5">
               <Link href="/insights" className="text-gray-600 hover:text-blue-600">
                 Insights
+              </Link>
+              <Link href="/about" className="text-gray-600 hover:text-blue-600">
+                About
+              </Link>
+              <Link href="/project" className="text-gray-600 hover:text-blue-600">
+                Project
               </Link>
               <Link href="/admin/dashboard" className="text-gray-600 hover:text-blue-600">
                 Attribution
