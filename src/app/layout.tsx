@@ -5,6 +5,7 @@ import {
   Instrument_Sans,
 } from "next/font/google";
 import Link from "next/link";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const dmSerif = DM_Serif_Display({
@@ -71,6 +72,7 @@ export default function RootLayout({
         <footer className="border-t border-gray-100 py-6 px-6 text-center text-xs text-gray-400">
           (c) {new Date().getFullYear()} Signal.lab | Knowledge for humans and machines
         </footer>
+        <Analytics />
       </body>
     </html>
   );
