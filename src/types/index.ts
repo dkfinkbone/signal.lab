@@ -26,6 +26,8 @@ export interface PublicMember {
   email?: string | null;
   company?: string | null;
   role?: string | null;
+  invite_token?: string | null;
+  member_role?: MemberRole | null;
   org_domain?: string | null;
   org_id?: string | null;
   profile_slug?: string | null;
@@ -44,6 +46,37 @@ export interface PublicOrg {
   org_domain?: string | null;
   created_at?: string | null;
   updated_at: string;
+}
+
+export type MemberRole =
+  | "contributor"
+  | "senior_member"
+  | "org_admin"
+  | "platform_admin";
+
+export interface MemberAccount {
+  id?: string;
+  member_id?: string;
+  sector: string;
+  region: string;
+  relationship: string;
+  deal_band?: string | null;
+  created_at?: string | null;
+}
+
+export interface MemberDomain {
+  id?: string;
+  member_id?: string;
+  domain_slug: string;
+  created_at?: string | null;
+}
+
+export interface OnboardingDraft {
+  name: string;
+  email: string;
+  company: string;
+  role: string;
+  inviteToken: string | null;
 }
 
 export type ProfileJsonDocument = Record<string, unknown>;
@@ -68,6 +101,9 @@ export type RouteType =
   | "about"
   | "project"
   | "project_gated"
+  | "join_landing"
+  | "join_signup"
+  | "onboarding"
   | "insights_index"
   | "insights_article"
   | "teaser"

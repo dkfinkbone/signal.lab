@@ -1,4 +1,6 @@
-import { getSupabaseAnonClient } from "./supabase-anon";
+import "server-only";
+
+import { getServiceClient } from "./supabase-service";
 import type {
   ProfileJsonDocument,
   PublicMember,
@@ -27,10 +29,18 @@ function logUnexpectedError(scope: string, message?: string | null) {
   }
 }
 
+function getMemberGraphClient() {
+  try {
+    return getServiceClient();
+  } catch {
+    return null;
+  }
+}
+
 export async function getVerifiedMemberBySlug(
   slug: string
 ): Promise<PublicMember | null> {
-  const client = getSupabaseAnonClient();
+  const client = getMemberGraphClient();
   if (!client) return null;
 
   const { data, error } = await client
@@ -53,7 +63,7 @@ export async function getVerifiedMemberBySlug(
 export async function getVerifiedOrgBySlug(
   slug: string
 ): Promise<PublicOrg | null> {
-  const client = getSupabaseAnonClient();
+  const client = getMemberGraphClient();
   if (!client) return null;
 
   const { data, error } = await client
@@ -73,7 +83,7 @@ export async function getVerifiedOrgBySlug(
 export async function getVerifiedMembersForOrg(
   orgId: string
 ): Promise<PublicMember[]> {
-  const client = getSupabaseAnonClient();
+  const client = getMemberGraphClient();
   if (!client) return [];
 
   const { data, error } = await client
@@ -94,7 +104,7 @@ export async function getVerifiedMembersForOrg(
 }
 
 export async function getVerifiedMemberCount(): Promise<number> {
-  const client = getSupabaseAnonClient();
+  const client = getMemberGraphClient();
   if (!client) return 0;
 
   const { count, error } = await client
@@ -111,7 +121,7 @@ export async function getVerifiedMemberCount(): Promise<number> {
 }
 
 export async function getOrgCount(): Promise<number> {
-  const client = getSupabaseAnonClient();
+  const client = getMemberGraphClient();
   if (!client) return 0;
 
   const { count, error } = await client
@@ -127,7 +137,7 @@ export async function getOrgCount(): Promise<number> {
 }
 
 export async function getContributorCountsByDomain(): Promise<Record<string, number>> {
-  const client = getSupabaseAnonClient();
+  const client = getMemberGraphClient();
   if (!client) return {};
 
   const { data, error } = await client
@@ -150,7 +160,7 @@ export async function getContributorCountsByDomain(): Promise<Record<string, num
 }
 
 export async function getProfileSitemapEntries(): Promise<SlugSitemapEntry[]> {
-  const client = getSupabaseAnonClient();
+  const client = getMemberGraphClient();
   if (!client) return [];
 
   const { data, error } = await client
@@ -168,7 +178,7 @@ export async function getProfileSitemapEntries(): Promise<SlugSitemapEntry[]> {
 }
 
 export async function getOrgSitemapEntries(): Promise<SlugSitemapEntry[]> {
-  const client = getSupabaseAnonClient();
+  const client = getMemberGraphClient();
   if (!client) return [];
 
   const { data, error } = await client
@@ -200,4 +210,13 @@ export function asString(value: unknown): string | null {
 export function asStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((entry): entry is string => typeof entry === "string" && entry.length > 0);
+}
+
+export function asObjectArray(value: unknown): Record<string, unknown>[] {
+  if (!Array.isArray(value)) return [];
+
+  return value.filter(
+    (entry): entry is Record<string, unknown> =>
+      Boolean(entry) && typeof entry === "object" && !Array.isArray(entry)
+  );
 }

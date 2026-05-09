@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { organizationJsonLd } from "@/lib/json-ld";
-import { getCategoryLabel } from "@/lib/categories";
+import { getCategoryLabel, getCategoryRouteParam } from "@/lib/categories";
 import {
   asJsonObject,
   asStringArray,
@@ -140,12 +140,13 @@ export default async function OrgPage({ params }: Props) {
           {categories.length > 0 ? (
             <div className="mt-4 flex flex-wrap gap-2">
               {categories.map((category) => (
-                <span
+                <Link
                   key={category}
-                  className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700"
+                  href={`/c/${encodeURIComponent(getCategoryRouteParam(category))}`}
+                  className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700 transition hover:bg-blue-50 hover:text-blue-700"
                 >
                   {getCategoryLabel(category)}
-                </span>
+                </Link>
               ))}
             </div>
           ) : (

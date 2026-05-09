@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { logRequestEventFromHeaders } from "@/lib/log-event";
 import {
+  asObjectArray,
   asJsonObject,
   asString,
   asStringArray,
@@ -25,6 +26,7 @@ function getProfileSnapshot(profileJson: unknown) {
   const json = asJsonObject(profileJson);
   const expertise = asJsonObject(json?.expertise);
   const orgNetwork = asJsonObject(json?.org_network);
+  const accounts = asObjectArray(json?.accounts);
 
   return {
     sameAs: asStringArray(json?.sameAs),
@@ -33,6 +35,8 @@ function getProfileSnapshot(profileJson: unknown) {
     orgPage: asString(orgNetwork?.org_page),
     insights: asStringArray(json?.insights),
     note: asString(json?.note),
+    sectors: [...new Set(accounts.map((account) => asString(account.sector)).filter(Boolean))],
+    regions: [...new Set(accounts.map((account) => asString(account.region)).filter(Boolean))],
   };
 }
 
@@ -153,6 +157,26 @@ export default async function ProfilePage({ params }: Props) {
                       {vendor}
                     </span>
                   ))}
+                </div>
+              </>
+            )}
+
+            {(snapshot.sectors.length > 0 || snapshot.regions.length > 0) && (
+              <>
+                <h3 className="mt-8 text-sm font-semibold uppercase tracking-[0.22em] text-gray-400">
+                  Account coverage
+                </h3>
+                <div className="mt-4 space-y-3 text-sm text-gray-600">
+                  {snapshot.sectors.length > 0 && (
+                    <p>
+                      Sectors: <span className="text-gray-900">{snapshot.sectors.join(", ")}</span>
+                    </p>
+                  )}
+                  {snapshot.regions.length > 0 && (
+                    <p>
+                      Regions: <span className="text-gray-900">{snapshot.regions.join(", ")}</span>
+                    </p>
+                  )}
                 </div>
               </>
             )}

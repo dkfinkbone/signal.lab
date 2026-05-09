@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { cookies, headers } from "next/headers";
+import { headers } from "next/headers";
 import Link from "next/link";
-import { createServerClient } from "@supabase/ssr";
+import { getAuthenticatedUser } from "@/lib/supabase-auth-server";
+import { isInviteTokenAccepted } from "@/lib/invite-tokens";
 import { logRequestEventFromHeaders } from "@/lib/log-event";
 
 const siteUrl =
@@ -31,46 +32,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 async function getSession() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!url || !anonKey) {
-    return null;
-  }
-
-  try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(url, anonKey, {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll() {
-          // Server Components cannot write cookies. A no-op keeps the soft gate
-          // resilient when auth/session refresh is unavailable.
-        },
-      },
-    });
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    return session;
-  } catch {
-    return null;
-  }
-}
-
-function isValidToken(token: string | null): boolean {
-  if (!token) return false;
-
-  const validTokens =
-    process.env.PROJECT_INVITE_TOKENS?.split(",")
-      .map((value) => value.trim())
-      .filter(Boolean) ?? [];
-
-  return validTokens.includes(token.trim());
+  return getAuthenticatedUser();
 }
 
 export default async function ProjectPage({
@@ -81,7 +43,8 @@ export default async function ProjectPage({
   const params = await searchParams;
   const token = params.token ?? null;
   const session = await getSession();
-  const hasAccess = Boolean(session) || isValidToken(token);
+  const hasAccess =
+    Boolean(session) || isInviteTokenAccepted(token, { allowAnyWhenUnconfigured: false });
 
   await logRequestEventFromHeaders({
     headers: await headers(),
