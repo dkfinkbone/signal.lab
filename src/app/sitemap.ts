@@ -1,16 +1,41 @@
 import { MetadataRoute } from "next";
 import { headers } from "next/headers";
 import { getPublishedArticles } from "@/lib/articles";
-import { articleCanonical, teaserCanonical, categoryCanonical } from "@/lib/canonical";
+import {
+  articleCanonical,
+  categoryCanonical,
+  orgCanonical,
+  profileCanonical,
+  teaserCanonical,
+} from "@/lib/canonical";
+import { collectCategoryRouteParams, getCategoryRouteParam } from "@/lib/categories";
 import { logRequestEventFromHeaders } from "@/lib/log-event";
+import { getOrgSitemapEntries, getProfileSitemapEntries } from "@/lib/member-graph";
 
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const requestHeaders = await headers();
   const articles = await getPublishedArticles();
-  const categories = [...new Set(articles.map((a) => a.category).filter(Boolean))];
+  const categories = collectCategoryRouteParams(
+    articles.map((article) => article.category).filter(Boolean)
+  );
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://signal.lab";
+  const [profileRows, orgRows] = await Promise.all([
+    getProfileSitemapEntries(),
+    getOrgSitemapEntries(),
+  ]);
+
+  const categoryLastModified = new Map<string, Date>();
+  for (const article of articles) {
+    const routeParam = getCategoryRouteParam(article.category);
+    const updatedAt = article.updated_at ? new Date(article.updated_at) : new Date();
+    const current = categoryLastModified.get(routeParam);
+
+    if (!current || updatedAt > current) {
+      categoryLastModified.set(routeParam, updatedAt);
+    }
+  }
 
   await logRequestEventFromHeaders({
     headers: requestHeaders,
@@ -28,8 +53,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const articleRoutes: MetadataRoute.Sitemap = articles.map((a) => ({
     url: articleCanonical(a.slug),
     lastModified: a.updated_at ? new Date(a.updated_at) : new Date(),
-    changeFrequency: "weekly" as const,
-    priority: 0.8,
+    changeFrequency: "monthly" as const,
+    priority: 0.9,
   }));
 
   const teaserRoutes: MetadataRoute.Sitemap = articles.map((a) => ({
@@ -41,10 +66,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const categoryRoutes: MetadataRoute.Sitemap = categories.map((cat) => ({
     url: categoryCanonical(cat),
-    lastModified: new Date(),
+    lastModified: categoryLastModified.get(cat) ?? new Date(),
     changeFrequency: "weekly" as const,
-    priority: 0.7,
+    priority: 1,
   }));
 
-  return [...staticRoutes, ...articleRoutes, ...teaserRoutes, ...categoryRoutes];
+  const profileRoutes: MetadataRoute.Sitemap = profileRows
+    .filter((row) => row.profile_slug)
+    .map((row) => ({
+      url: profileCanonical(row.profile_slug as string),
+      lastModified: new Date(row.updated_at),
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    }));
+
+  const orgRoutes: MetadataRoute.Sitemap = orgRows
+    .filter((row) => row.org_slug)
+    .map((row) => ({
+      url: orgCanonical(row.org_slug as string),
+      lastModified: new Date(row.updated_at),
+      changeFrequency: "weekly" as const,
+      priority: 0.9,
+    }));
+
+  return [
+    ...staticRoutes,
+    ...articleRoutes,
+    ...teaserRoutes,
+    ...categoryRoutes,
+    ...profileRoutes,
+    ...orgRoutes,
+  ];
 }

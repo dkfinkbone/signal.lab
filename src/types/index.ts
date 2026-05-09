@@ -20,6 +20,34 @@ export interface Article {
   status: "draft" | "published" | "archived";
 }
 
+export interface PublicMember {
+  id: string;
+  name: string;
+  email?: string | null;
+  company?: string | null;
+  role?: string | null;
+  org_domain?: string | null;
+  org_id?: string | null;
+  profile_slug?: string | null;
+  profile_score?: number | null;
+  linkedin_url?: string | null;
+  verified_at?: string | null;
+  created_at?: string | null;
+  updated_at: string;
+  profile_json?: ProfileJsonDocument | null;
+}
+
+export interface PublicOrg {
+  id: string;
+  name: string;
+  org_slug: string;
+  org_domain?: string | null;
+  created_at?: string | null;
+  updated_at: string;
+}
+
+export type ProfileJsonDocument = Record<string, unknown>;
+
 export interface RequestEvent {
   id: string;
   created_at: string;
@@ -44,6 +72,8 @@ export type RouteType =
   | "insights_article"
   | "teaser"
   | "category"
+  | "profile"
+  | "org"
   | "agent_read"
   | "search"
   | "llms"

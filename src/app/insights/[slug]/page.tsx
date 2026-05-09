@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { getArticleBySlug, getPublishedArticles } from "@/lib/articles";
-import { articleCanonical } from "@/lib/canonical";
+import { articleCanonical, articleDataCanonical } from "@/lib/canonical";
 import { articleJsonLd } from "@/lib/json-ld";
 import { logRequestEventFromHeaders } from "@/lib/log-event";
 import { articleMetadata } from "@/lib/metadata";
@@ -142,6 +142,10 @@ export default async function ArticlePage({ params }: Props) {
           <p>
             <a href={`/t/${article.slug}`} className="hover:underline">
               Teaser version
+            </a>
+            {" | "}
+            <a href={articleDataCanonical(article.slug)} className="hover:underline">
+              Article JSON
             </a>
             {" | "}
             <a href={`/agent-read/${article.slug}`} className="hover:underline">

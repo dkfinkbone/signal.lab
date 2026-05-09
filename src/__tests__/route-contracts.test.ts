@@ -10,9 +10,22 @@
  */
 
 import { articleJsonLd } from "@/lib/json-ld";
-import { articleCanonical, teaserCanonical, agentReadCanonical, categoryCanonical } from "@/lib/canonical";
+import {
+  articleCanonical,
+  articleDataCanonical,
+  teaserCanonical,
+  agentReadCanonical,
+  categoryCanonical,
+  categoryDataCanonical,
+  profileCanonical,
+  profileDataCanonical,
+  orgCanonical,
+  orgDataCanonical,
+} from "@/lib/canonical";
 import { articleMetadata, pageMetadata } from "@/lib/metadata";
-import type { Article } from "@/types";
+import { buildLlmsManifest } from "@/lib/llms";
+import { categoryJsonLd, organizationJsonLd, personJsonLd } from "@/lib/json-ld";
+import type { Article, PublicMember, PublicOrg } from "@/types";
 
 const SITE = "https://signal.lab";
 
@@ -67,6 +80,32 @@ describe("canonical URLs", () => {
   it("categoryCanonical produces /c/:category", () => {
     expect(categoryCanonical("AI Publishing")).toBe(`${SITE}/c/AI%20Publishing`);
   });
+
+  it("articleDataCanonical produces /insights/:slug/data.json", () => {
+    expect(articleDataCanonical("my-article")).toBe(`${SITE}/insights/my-article/data.json`);
+  });
+
+  it("categoryDataCanonical produces /c/:category/data.json", () => {
+    expect(categoryDataCanonical("AI Publishing")).toBe(
+      `${SITE}/c/AI%20Publishing/data.json`
+    );
+  });
+
+  it("profileCanonical produces /p/:slug", () => {
+    expect(profileCanonical("jane-smith")).toBe(`${SITE}/p/jane-smith`);
+  });
+
+  it("profileDataCanonical produces /p/:slug/data.json", () => {
+    expect(profileDataCanonical("jane-smith")).toBe(`${SITE}/p/jane-smith/data.json`);
+  });
+
+  it("orgCanonical produces /org/:slug", () => {
+    expect(orgCanonical("acme")).toBe(`${SITE}/org/acme`);
+  });
+
+  it("orgDataCanonical produces /org/:slug/data.json", () => {
+    expect(orgDataCanonical("acme")).toBe(`${SITE}/org/acme/data.json`);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -98,8 +137,85 @@ describe("articleJsonLd", () => {
     expect(ld.url).toBe(published.canonical_url);
   });
 
+  it("includes publisher", () => {
+    const publisher = ld.publisher as Record<string, unknown>;
+    expect(publisher.name).toBe("Signal.lab");
+  });
+
   it("includes articleBody (full text for crawlers)", () => {
     expect(ld.articleBody).toBe(published.full_body);
+  });
+});
+
+describe("categoryJsonLd", () => {
+  const ld = categoryJsonLd("Zero Trust Architecture", "Zero Trust Architecture", [], [
+    { headline: "Zero Trust Guide", slug: "zero-trust-guide" },
+  ]) as Record<string, unknown>;
+
+  it("uses DefinedTermSet", () => {
+    expect(ld["@type"]).toBe("DefinedTermSet");
+  });
+
+  it("includes the category URL", () => {
+    expect(ld.url).toBe(`${SITE}/c/Zero%20Trust%20Architecture`);
+  });
+});
+
+describe("personJsonLd", () => {
+  const member: PublicMember = {
+    id: "member-1",
+    name: "Jane Smith",
+    company: "Acme",
+    role: "Advisor",
+    profile_slug: "jane-smith",
+    updated_at: "2026-01-02T00:00:00Z",
+  };
+
+  it("falls back to a minimal Person document", () => {
+    const ld = personJsonLd(member);
+    expect(ld["@type"]).toBe("Person");
+    expect(ld.name).toBe("Jane Smith");
+    expect(ld.url).toBe(`${SITE}/p/jane-smith`);
+  });
+
+  it("prefers cached profile_json when present", () => {
+    const ld = personJsonLd({
+      ...member,
+      profile_json: {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        name: "Cached Jane",
+      },
+    });
+
+    expect(ld.name).toBe("Cached Jane");
+  });
+});
+
+describe("organizationJsonLd", () => {
+  const org: PublicOrg = {
+    id: "org-1",
+    name: "Acme",
+    org_slug: "acme",
+    updated_at: "2026-01-02T00:00:00Z",
+  };
+
+  const members: PublicMember[] = [
+    {
+      id: "member-1",
+      name: "Jane Smith",
+      profile_slug: "jane-smith",
+      updated_at: "2026-01-02T00:00:00Z",
+    },
+  ];
+
+  it("uses Organization and links members", () => {
+    const ld = organizationJsonLd(org, members) as Record<string, unknown>;
+    expect(ld["@type"]).toBe("Organization");
+    expect(ld.url).toBe(`${SITE}/org/acme`);
+    expect((ld.member as Array<Record<string, unknown>>)[0].url).toBe(
+      `${SITE}/p/jane-smith`
+    );
   });
 });
 
@@ -228,5 +344,25 @@ describe("agent-read payload shape", () => {
     for (const field of requiredFields) {
       expect(payload).toHaveProperty(field);
     }
+  });
+});
+
+describe("buildLlmsManifest", () => {
+  it("lists network counts and machine-readable endpoints", () => {
+    const manifest = buildLlmsManifest({
+      base: SITE,
+      generatedAt: "2026-05-10T12:00:00.000Z",
+      memberCount: 3,
+      orgCount: 1,
+      articleCount: 7,
+      categories: [
+        { slug: "zero-trust", label: "Zero Trust Architecture", contributorCount: 2 },
+      ],
+    });
+
+    expect(manifest).toContain("Verified contributors: 3");
+    expect(manifest).toContain(`${SITE}/p/[slug]/data.json`);
+    expect(manifest).toContain(`${SITE}/insights/[slug]/data.json`);
+    expect(manifest).toContain("[Zero Trust Architecture]");
   });
 });
