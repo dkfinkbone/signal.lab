@@ -35,8 +35,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? new URL(req.url).origin;
+  const siteUrl = new URL(req.url).origin.replace(/\/$/, "");
   const supabase = createClient(supabaseUrl, anonKey, {
     auth: {
       persistSession: false,
