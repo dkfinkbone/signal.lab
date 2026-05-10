@@ -2,8 +2,8 @@
 
 Updated: 2026-05-10
 
-This file is the current Codex handoff for Claude Code after the onboarding
-foundation pass.
+This file is the current Codex handoff for Claude Code after the hosted
+Supabase onboarding/config pass.
 
 Read this after:
 - `CLAUDE.md`
@@ -13,10 +13,16 @@ Read this after:
 
 - Repo: `https://github.com/dkfinkbone/signal.lab.git`
 - Active branch: `feature/claude-build-001`
-- Latest onboarding commit: `562afd7` - `feat: add onboarding member graph foundation`
-- Previous major content-graph commit: `b55e9d7` - `feat: add dynamic llms and structured profile endpoints`
+- Current branch head:
+  - `4930488` - `chore: sync remote Supabase migrations`
+  - `e7668c6` - `chore: harden Supabase onboarding config`
+  - `2004380` - `docs: add Codex onboarding handoff`
+  - `562afd7` - `feat: add onboarding member graph foundation`
+  - `b55e9d7` - `feat: add dynamic llms and structured profile endpoints`
 
 ## What Codex completed
+
+### 1. Base onboarding/schema foundation
 
 Codex implemented the missing base onboarding/schema foundation for:
 - `members`
@@ -24,8 +30,7 @@ Codex implemented the missing base onboarding/schema foundation for:
 - `accounts`
 - `member_domains`
 
-### New migration
-
+Key migration:
 - `supabase/migrations/20260509234923_onboarding_member_graph_foundation.sql`
 
 This migration creates:
@@ -40,12 +45,7 @@ It also adds:
 - `updated_at` trigger function
 - RLS enabled on the new tables
 
-Note:
-- No anon/authenticated policies were added yet because the current app reads the
-  member/org graph with the service role on the server.
-- This avoids getting blocked by the new Supabase Data API exposure defaults.
-
-### New onboarding flow
+### 2. Onboarding flow
 
 Implemented routes:
 - `/join/[token]`
@@ -66,31 +66,62 @@ Implemented components/helpers:
 - `src/lib/profile-json.ts`
 - `src/lib/invite-tokens.ts`
 
-### Public graph updates
+### 3. Public graph updates
 
 Codex also updated:
 - `src/lib/member-graph.ts`
-  - now uses server-side service role reads instead of anon reads
+  - now uses server-side service role reads
 - `src/app/p/[slug]/page.tsx`
-  - now renders sectors/regions from the stored profile JSON
+  - renders sectors/regions from stored profile JSON
 - `src/app/org/[slug]/page.tsx`
-  - shared domains now link to real category pages
+  - shared domains link to real category pages
 - `src/app/project/page.tsx`
-  - now uses the shared invite-token helper and server auth helper
+  - uses the shared invite-token helper and server auth helper
 - `src/app/join/page.tsx`
-  - now acts as the invalid/expired invite fallback page
+  - acts as the invalid/expired invite fallback page
+
+### 4. Hosted Supabase/Auth hardening
+
+Codex completed the hosted Supabase steps that were previously still open:
+
+- applied:
+  - `20260509234923_onboarding_member_graph_foundation.sql`
+  - `20260510123000_add_profile_json.sql`
+- deployed:
+  - `supabase/functions/generate-profile-json/index.ts`
+- persisted Edge Function config in:
+  - `supabase/config.toml`
+  - `[functions.generate-profile-json]`
+  - `verify_jwt = false`
+- updated hosted Supabase Auth:
+  - `site_url = https://signal-lab.connxr.com`
+  - redirect allow-list for local, preview, and live domains
+  - magic-link email template for `/join/verify` with `token_hash`
+- hardened:
+  - `src/app/api/join/request-magic-link/route.ts`
+  - now uses the incoming request origin for `emailRedirectTo`
+
+### 5. Migration history sync
+
+The hosted project already had older migrations that were missing from the repo.
+Codex fetched and committed them so local and remote history match:
+
+- `20260503124538_create_articles_and_request_events.sql`
+- `20260503125453_rls_policies_and_indexes.sql`
+- `20260503125655_attribution_rpc_functions.sql`
+- `20260507230140_create_football_stats_tables.sql`
 
 ## Current behavior
 
 ### Minimal invite model
 
-The new join flow does **not** implement Stage 01 invite infrastructure yet.
+The join flow still does **not** implement Stage 01 invite infrastructure.
 
 For now:
 - `/join/[token]` uses `PROJECT_INVITE_TOKENS`
 - if `PROJECT_INVITE_TOKENS` is empty, any non-empty token is accepted
 
-This is intentional for pilot testing and should be replaced later by:
+This is still the pilot/testing bridge and should later be replaced by:
 - `invite_tokens`
 - `invite_events`
 - invite APIs
@@ -115,12 +146,13 @@ Current auth flow:
 
 Current org logic:
 - `org_domain` is inferred from work email
-- `orgs` row is auto-created once there are at least 2 verified members with the same domain
+- `orgs` row is auto-created once there are at least 2 verified members with the
+  same domain
 - members with that domain are linked to the org
 
 ## Verification already completed
 
-These passed locally on `562afd7`:
+These currently pass on the branch:
 
 ```bash
 npm test
@@ -128,99 +160,38 @@ npm run lint
 npm run build
 ```
 
-Additional smoke checks completed locally:
-- `/join/[token]` returns `200`
-- `/join/[token]/signup` returns `200`
-- unauthenticated `/onboarding/contribute` redirects to `/join`
+Supabase state verified:
+- local and remote migration history are aligned
+- onboarding/profile migrations are applied
+- `generate-profile-json` is deployed
+- hosted auth config is updated for the onboarding callback flow
 
-## Immediate Supabase gaps
+## Immediate Supabase gap
 
-These are the blockers to real end-to-end onboarding in the hosted project.
+### Manual database webhooks are still not configured
 
-### 1. Apply the new base migration
+This is now the main remaining hosted Supabase task.
 
-Required:
-- apply `20260509234923_onboarding_member_graph_foundation.sql`
-
-Without this:
-- `members`
-- `orgs`
-- `accounts`
-- `member_domains`
-
-do not exist, and the onboarding routes cannot finish.
-
-### 2. Apply the later profile JSON migration after the base migration
-
-Existing file:
-- `supabase/migrations/20260510123000_add_profile_json.sql`
-
-That migration previously assumed `members` already existed.
-
-Now the order should be:
-1. `20260509234923_onboarding_member_graph_foundation.sql`
-2. `20260510123000_add_profile_json.sql`
-
-After the base migration, review whether the second migration still needs all of
-its statements because some fields now overlap with the new base schema.
-
-### 3. Update Supabase Auth email template for SSR magic links
-
-The app now expects the magic link to land on:
-- `/join/verify?token_hash=...&type=email`
-
-Update the relevant Supabase email template so it sends `token_hash` to
-`/join/verify`, not to the old auth helper path.
-
-Also ensure the redirect URLs allow:
-- local dev origin(s)
-- preview deployment origin(s)
-- production origin
-
-### 4. Deploy and wire the `generate-profile-json` Edge Function
-
-Existing function:
-- `supabase/functions/generate-profile-json/index.ts`
-
-This still needs:
-- deploy to Supabase Edge Functions
-- function secrets verified
-- database webhooks created manually in the Supabase dashboard
-
-Claude should assume the webhook setup is still manual.
-
-### 5. Manual database webhooks still not configured
-
-The function is meant to react to changes on:
+Manual Supabase dashboard work is still required for:
 - `members`
 - `accounts`
 - `member_domains`
 
-Manual Supabase dashboard work is still required here.
+These should target:
+- `generate-profile-json`
 
-Payload assumptions in the function currently match Supabase webhook docs:
+The function payload assumptions currently expect:
 - `type`
 - `table`
 - `schema`
 - `record`
 - `old_record`
 
-### 6. No invite table infrastructure yet
-
-Still missing:
-- `invite_tokens`
-- `invite_events`
-- `/api/invite/create`
-- `/api/invite/[token]`
-- invite analytics in admin dashboard
-
-The current onboarding path is a bridge, not the final invite system.
-
 ## Important implementation caveats
 
 ### Service-role reads
 
-The member/org graph now reads with `getServiceClient()` on the server.
+The member/org graph reads with `getServiceClient()` on the server.
 
 Reason:
 - avoids reliance on anon/Data API grants for the new tables
@@ -233,41 +204,43 @@ Risk:
 ### Supabase SSR session refresh
 
 Current state:
-- `src/proxy.ts` still only handles Basic Auth for `/admin` and `/api/admin/*`
-- it does **not** yet implement the Supabase session refresh proxy pattern
+- `src/proxy.ts` still handles Basic Auth for `/admin` and `/api/admin/*`
+- it does **not** implement a Supabase session refresh proxy pattern
 
-This is acceptable for the current pilot flow but may become flaky if auth session
-refresh behavior causes problems across requests.
-
-If Claude sees auth inconsistency during onboarding, next hardening step is:
+This is acceptable for the current pilot flow, but if auth consistency becomes
+flaky across requests, the next hardening step is:
 - add Supabase SSR session refresh handling into `src/proxy.ts`
-- prefer `getClaims()` semantics for protected auth checks
 
 ### RLS and API exposure
 
-Because of recent Supabase changes, new public-schema tables may not be exposed to
-the Data API automatically on some projects.
-
-Current code path avoids this issue for public profile/org rendering by using the
-service role server-side.
+The current public profile/org code path avoids anon Data API exposure concerns by
+using the service role server-side.
 
 If Claude later wants anon/public REST access to these tables, it will need:
 - explicit grants if Data API exposure is disabled by default
 - proper RLS policies
 
+### Unrelated remote migration contamination
+
+`20260507230140_create_football_stats_tables.sql` exists in the hosted migration
+history but is not part of Signal.lab product scope.
+
+Do not build Signal.lab features on top of:
+- `matches`
+- `match_stats`
+- `match_lineups`
+
+Treat that migration as legacy cross-project contamination only.
+
 ## Recommended next sequence for Claude
 
 ### Immediate next step
 
-Do **not** start another large feature first.
+Do **not** redo the already-finished Supabase work.
 
 Instead:
-1. confirm the new migration has been applied in Supabase
-2. confirm the magic-link template now points to `/join/verify`
-3. confirm redirect URLs are allowed in Supabase Auth settings
-4. deploy `generate-profile-json`
-5. manually configure the database webhooks
-6. run a real hosted smoke test:
+1. create the three database webhooks in the Supabase dashboard
+2. run a real hosted smoke test:
    - `/join/[token]`
    - `/join/[token]/signup`
    - magic-link click
@@ -275,10 +248,11 @@ Instead:
    - `/onboarding/profile`
    - `/p/[slug]`
    - `/org/[slug]` after second member from same domain
+3. confirm `profile_json` regeneration actually fires after writes
 
 ### After that
 
-Claude should then decide between these two follow-ups:
+Claude should then choose between:
 
 Option A - finish Stage 01 properly
 - build `invite_tokens`
@@ -289,27 +263,16 @@ Option A - finish Stage 01 properly
 Option B - harden the new onboarding flow
 - add Supabase session refresh proxy support
 - add more E2E coverage
-- deploy and verify the profile JSON regeneration path
-- confirm category/profile/org internal linking behavior in preview/prod
+- verify category/profile/org internal linking behavior in preview/prod
 
 Recommended order:
-- do Option A first if the product priority is the real invite loop
+- do Option A first if the priority is the real invite loop
 - do Option B first if the immediate goal is a reliable demoable onboarding path
 
 ## What Claude should not assume
 
-- Do not assume the hosted Supabase project already has the new tables.
-- Do not assume the magic-link template has been updated.
-- Do not assume the Edge Function is deployed.
-- Do not assume the webhooks are configured.
-- Do not assume `PROJECT_INVITE_TOKENS` will remain the long-term model.
-
-## Codex note
-
-Codex intentionally stopped at the point where:
-- code is ready
-- local verification is green
-- GitHub branch is updated
-- remaining blockers are Supabase config + deployment tasks
-
-This is the correct pause point before deeper invite-system work.
+- Do not assume the football migration is product scope.
+- Do not assume `PROJECT_INVITE_TOKENS` is the long-term model.
+- Do not assume database webhooks are configured yet.
+- Do not assume the invite system tables already exist.
+- Do not assume Vercel `NEXT_PUBLIC_SITE_URL` is already corrected unless verified.
