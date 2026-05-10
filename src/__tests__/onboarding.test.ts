@@ -2,9 +2,15 @@ import { buildProfileJsonDocument } from "@/lib/profile-json";
 import { parseAccessRequestPayload } from "@/lib/access-requests";
 import { isInviteTokenAccepted } from "@/lib/invite-tokens";
 import {
+  parseReturnToCookie,
+  serializeReturnToCookie,
+} from "@/lib/onboarding-cookie";
+import {
   calculateProfileScore,
   inferCompanyNameFromEmail,
   parseContributionPayload,
+  parseMemberProfilePayload,
+  parseReturningMemberMagicLinkPayload,
   parseSignupDraft,
 } from "@/lib/onboarding";
 import type { PublicMember, PublicOrg } from "@/types";
@@ -76,6 +82,49 @@ describe("onboarding helpers", () => {
     expect(calculateProfileScore(20, 20)).toBe(100);
   });
 
+  it("accepts work emails for returning member sign-in links", () => {
+    expect(
+      parseReturningMemberMagicLinkPayload({
+        email: "jane@acme.com",
+      })
+    ).toEqual({ email: "jane@acme.com" });
+  });
+
+  it("rejects consumer domains for returning member sign-in links", () => {
+    expect(() =>
+      parseReturningMemberMagicLinkPayload({
+        email: "jane@gmail.com",
+      })
+    ).toThrow("Use the work email linked to your Signal.lab profile.");
+  });
+
+  it("accepts profile detail updates with optional linkedin", () => {
+    expect(
+      parseMemberProfilePayload({
+        name: "Jane Smith",
+        company: "Acme",
+        role: "Advisor",
+        linkedinUrl: "https://www.linkedin.com/in/jane-smith",
+      })
+    ).toEqual({
+      name: "Jane Smith",
+      company: "Acme",
+      role: "Advisor",
+      linkedinUrl: "https://www.linkedin.com/in/jane-smith",
+    });
+  });
+
+  it("rejects non-linkedin profile URLs", () => {
+    expect(() =>
+      parseMemberProfilePayload({
+        name: "Jane Smith",
+        company: "Acme",
+        role: "Advisor",
+        linkedinUrl: "https://example.com/jane",
+      })
+    ).toThrow("Use a LinkedIn profile or company URL.");
+  });
+
   it("accepts work emails for access requests", () => {
     const request = parseAccessRequestPayload({
       name: "Jane Smith",
@@ -99,6 +148,16 @@ describe("onboarding helpers", () => {
         sourcePath: "/join",
       })
     ).toThrow("Use your work email to request access.");
+  });
+});
+
+describe("auth return cookies", () => {
+  it("round-trips safe local paths", () => {
+    expect(parseReturnToCookie(serializeReturnToCookie("/me"))).toBe("/me");
+  });
+
+  it("rejects protocol-relative paths", () => {
+    expect(parseReturnToCookie(serializeReturnToCookie("//evil.test"))).toBeNull();
   });
 });
 

@@ -148,6 +148,12 @@ export default async function OnboardingProfilePage() {
         >
           Browse insights
         </Link>
+        <Link
+          href="/me"
+          className="inline-flex items-center rounded-2xl border border-gray-300 px-5 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+        >
+          Manage my profile
+        </Link>
       </div>
     </section>
   );

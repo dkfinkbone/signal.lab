@@ -118,6 +118,7 @@ export type RouteType =
   | "join_landing"
   | "join_signup"
   | "onboarding"
+  | "account"
   | "insights_index"
   | "insights_article"
   | "teaser"

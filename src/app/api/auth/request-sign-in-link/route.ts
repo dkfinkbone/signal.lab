@@ -6,29 +6,36 @@ import {
   serializeOnboardingDraft,
   serializeReturnToCookie,
 } from "@/lib/onboarding-cookie";
-import { isInviteTokenAccepted } from "@/lib/invite-tokens";
-import { parseSignupDraft } from "@/lib/onboarding";
+import { parseReturningMemberMagicLinkPayload } from "@/lib/onboarding";
+import { getMemberByEmail } from "@/lib/onboarding-store";
 import { enforceRateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
-  const rateLimit = enforceRateLimit(req, "join-magic-link", 5, 60_000);
+  const rateLimit = enforceRateLimit(req, "member-sign-in-link", 5, 60_000);
   if (!rateLimit.allowed) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
-  let draft;
+  let payload: { email: string };
 
   try {
-    draft = parseSignupDraft(await req.json());
+    payload = parseReturningMemberMagicLinkPayload(await req.json());
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Invalid signup request." },
+      { error: error instanceof Error ? error.message : "Invalid sign-in request." },
       { status: 400 }
     );
   }
 
-  if (!isInviteTokenAccepted(draft.inviteToken, { allowAnyWhenUnconfigured: true })) {
-    return NextResponse.json({ error: "Invite link not recognised." }, { status: 404 });
+  const member = await getMemberByEmail(payload.email);
+  if (!member) {
+    return NextResponse.json(
+      {
+        error:
+          "No Signal.lab member profile was found for that email yet. Use an invite link or request access first.",
+      },
+      { status: 404 }
+    );
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -49,15 +56,10 @@ export async function POST(req: NextRequest) {
   });
 
   const { error } = await supabase.auth.signInWithOtp({
-    email: draft.email,
+    email: member.email ?? payload.email,
     options: {
       emailRedirectTo: `${siteUrl}/join/verify`,
-      data: {
-        onboarding_name: draft.name,
-        onboarding_company: draft.company,
-        onboarding_role: draft.role,
-        invite_token: draft.inviteToken,
-      },
+      shouldCreateUser: false,
     },
   });
 
@@ -65,17 +67,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  const response = NextResponse.json({ ok: true, email: draft.email });
-  response.cookies.set(ONBOARDING_COOKIE_NAME, serializeOnboardingDraft(draft), {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: siteUrl.startsWith("https://"),
-    maxAge: 60 * 60,
-    path: "/",
-  });
+  const response = NextResponse.json({ ok: true, email: member.email ?? payload.email });
+  response.cookies.set(
+    ONBOARDING_COOKIE_NAME,
+    serializeOnboardingDraft({
+      name: member.name,
+      email: member.email ?? payload.email,
+      company: member.company ?? "",
+      role: member.role ?? "",
+      inviteToken: member.invite_token ?? null,
+    }),
+    {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: siteUrl.startsWith("https://"),
+      maxAge: 60 * 60,
+      path: "/",
+    }
+  );
   response.cookies.set(
     AUTH_RETURN_TO_COOKIE_NAME,
-    serializeReturnToCookie("/onboarding/contribute"),
+    serializeReturnToCookie("/me"),
     {
       httpOnly: true,
       sameSite: "lax",

@@ -1,6 +1,7 @@
 import type { OnboardingDraft } from "@/types";
 
 export const ONBOARDING_COOKIE_NAME = "signal_lab_onboarding";
+export const AUTH_RETURN_TO_COOKIE_NAME = "signal_lab_return_to";
 
 export function serializeOnboardingDraft(draft: OnboardingDraft): string {
   return encodeURIComponent(JSON.stringify(draft));
@@ -28,6 +29,26 @@ export function parseOnboardingDraftCookie(
           ? record.inviteToken
           : null,
     };
+  } catch {
+    return null;
+  }
+}
+
+export function serializeReturnToCookie(path: string): string {
+  return encodeURIComponent(path);
+}
+
+export function parseReturnToCookie(value: string | undefined): string | null {
+  if (!value) return null;
+
+  try {
+    const decoded = decodeURIComponent(value);
+
+    if (!decoded.startsWith("/") || decoded.startsWith("//")) {
+      return null;
+    }
+
+    return decoded;
   } catch {
     return null;
   }

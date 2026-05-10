@@ -179,6 +179,73 @@ export function parseSignupDraft(payload: unknown): OnboardingDraft {
   };
 }
 
+export function parseReturningMemberMagicLinkPayload(payload: unknown): {
+  email: string;
+} {
+  const record = requireObject(payload, "Invalid sign-in request.");
+  const email = normalizeEmail(getStringField(record, "email"));
+
+  if (!email || !email.includes("@")) {
+    throw new Error("Enter a valid email address.");
+  }
+
+  if (!isWorkEmail(email)) {
+    throw new Error("Use the work email linked to your Signal.lab profile.");
+  }
+
+  return { email };
+}
+
+export function parseMemberProfilePayload(payload: unknown): {
+  name: string;
+  company: string;
+  role: string;
+  linkedinUrl: string | null;
+} {
+  const record = requireObject(payload, "Invalid profile update.");
+  const name = getStringField(record, "name");
+  const company = getStringField(record, "company");
+  const role = getStringField(record, "role");
+  const linkedinUrl = getStringField(record, "linkedinUrl");
+
+  if (name.length < 2) {
+    throw new Error("Enter your full name.");
+  }
+
+  if (company.length < 2) {
+    throw new Error("Enter your company.");
+  }
+
+  if (role.length < 2) {
+    throw new Error("Enter your current role.");
+  }
+
+  if (linkedinUrl) {
+    let parsedUrl: URL;
+
+    try {
+      parsedUrl = new URL(linkedinUrl);
+    } catch {
+      throw new Error("Enter a valid LinkedIn URL.");
+    }
+
+    if (!["https:", "http:"].includes(parsedUrl.protocol)) {
+      throw new Error("Enter a valid LinkedIn URL.");
+    }
+
+    if (!parsedUrl.hostname.toLowerCase().includes("linkedin.com")) {
+      throw new Error("Use a LinkedIn profile or company URL.");
+    }
+  }
+
+  return {
+    name,
+    company,
+    role,
+    linkedinUrl: linkedinUrl || null,
+  };
+}
+
 export function parseContributionPayload(payload: unknown): {
   accounts: MemberAccount[];
   domains: string[];

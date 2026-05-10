@@ -130,6 +130,22 @@ export async function getMemberByEmail(
   );
 }
 
+export async function getMemberById(
+  memberId: string
+): Promise<OnboardingMemberRecord | null> {
+  const client = getServiceClient();
+
+  return maybeSingle<OnboardingMemberRecord>(
+    client
+      .from("members")
+      .select(
+        "id, name, email, company, role, org_domain, org_id, profile_slug, profile_score, linkedin_url, verified_at, invite_token, member_role, profile_json, created_at, updated_at"
+      )
+      .eq("id", memberId)
+      .maybeSingle()
+  );
+}
+
 export async function getMemberAccounts(memberId: string): Promise<MemberAccount[]> {
   const client = getServiceClient();
 
@@ -434,6 +450,57 @@ export async function saveMemberContribution(
   }
 
   await refreshMemberProfileJson(memberId);
+}
+
+export async function updateMemberProfile(
+  memberId: string,
+  payload: {
+    name: string;
+    company: string;
+    role: string;
+    linkedinUrl: string | null;
+  }
+) {
+  const client = getServiceClient();
+  const current = await getMemberById(memberId);
+
+  if (!current) {
+    throw new Error("Contributor profile not found.");
+  }
+
+  const now = new Date().toISOString();
+  const { error: updateError } = await client
+    .from("members")
+    .update({
+      name: payload.name,
+      company: payload.company,
+      role: payload.role,
+      linkedin_url: payload.linkedinUrl,
+      updated_at: now,
+    })
+    .eq("id", memberId);
+
+  if (updateError) {
+    throw new Error(updateError.message);
+  }
+
+  if (current.org_domain) {
+    const org = await ensureOrgForVerifiedDomain(current.org_domain, payload.company);
+
+    if (org && current.org_id !== org.id) {
+      const { error: orgUpdateError } = await client
+        .from("members")
+        .update({ org_id: org.id, updated_at: now })
+        .eq("id", memberId);
+
+      if (orgUpdateError && !isMissingTableError(orgUpdateError.message)) {
+        throw new Error(orgUpdateError.message);
+      }
+    }
+  }
+
+  await refreshMemberProfileJson(memberId);
+  return getMemberById(memberId);
 }
 
 export async function getOnboardingContextByEmail(email: string): Promise<{

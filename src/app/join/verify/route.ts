@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { EmailOtpType, User } from "@supabase/supabase-js";
-import { ONBOARDING_COOKIE_NAME, parseOnboardingDraftCookie } from "@/lib/onboarding-cookie";
+import {
+  AUTH_RETURN_TO_COOKIE_NAME,
+  ONBOARDING_COOKIE_NAME,
+  parseOnboardingDraftCookie,
+  parseReturnToCookie,
+} from "@/lib/onboarding-cookie";
 import { createSupabaseAuthServerClient } from "@/lib/supabase-auth-server";
-import { upsertMemberFromVerifiedDraft } from "@/lib/onboarding-store";
+import {
+  getOnboardingContextByEmail,
+  upsertMemberFromVerifiedDraft,
+} from "@/lib/onboarding-store";
 import type { OnboardingDraft } from "@/types";
 
 function resolveDraft(user: User, fallbackDraft: OnboardingDraft | null): OnboardingDraft | null {
@@ -12,20 +20,20 @@ function resolveDraft(user: User, fallbackDraft: OnboardingDraft | null): Onboar
       : {};
   const email = user.email ?? fallbackDraft?.email ?? "";
   const name =
-    (typeof metadata.onboarding_name === "string" && metadata.onboarding_name) ||
     fallbackDraft?.name ||
+    (typeof metadata.onboarding_name === "string" && metadata.onboarding_name) ||
     "";
   const company =
-    (typeof metadata.onboarding_company === "string" && metadata.onboarding_company) ||
     fallbackDraft?.company ||
+    (typeof metadata.onboarding_company === "string" && metadata.onboarding_company) ||
     "";
   const role =
-    (typeof metadata.onboarding_role === "string" && metadata.onboarding_role) ||
     fallbackDraft?.role ||
+    (typeof metadata.onboarding_role === "string" && metadata.onboarding_role) ||
     "";
   const inviteToken =
-    (typeof metadata.invite_token === "string" && metadata.invite_token) ||
     fallbackDraft?.inviteToken ||
+    (typeof metadata.invite_token === "string" && metadata.invite_token) ||
     null;
 
   if (!email || !name || !role) {
@@ -93,7 +101,22 @@ export async function GET(request: NextRequest) {
     return redirectWithError(request, "schema_pending");
   }
 
-  const response = NextResponse.redirect(new URL("/onboarding/contribute", request.url));
+  const returnTo = parseReturnToCookie(
+    request.cookies.get(AUTH_RETURN_TO_COOKIE_NAME)?.value
+  );
+  let destination = returnTo;
+
+  if (!destination && member.email) {
+    const context = await getOnboardingContextByEmail(member.email);
+    const hasContributionData =
+      context.accounts.length > 0 || context.domains.length > 0;
+    destination = hasContributionData ? "/me" : "/onboarding/contribute";
+  }
+
+  const response = NextResponse.redirect(
+    new URL(destination ?? "/onboarding/contribute", request.url)
+  );
   response.cookies.delete(ONBOARDING_COOKIE_NAME);
+  response.cookies.delete(AUTH_RETURN_TO_COOKIE_NAME);
   return response;
 }

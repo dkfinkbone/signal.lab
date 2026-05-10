@@ -32,6 +32,9 @@ export default async function OnboardingContributionPage() {
     redirect("/join?error=schema_pending");
   }
 
+  const hasExistingContributionData =
+    context.accounts.length > 0 || context.domains.length > 0;
+
   await logRequestEventFromHeaders({
     headers: await headers(),
     path: "/onboarding/contribute",
@@ -45,11 +48,12 @@ export default async function OnboardingContributionPage() {
         Onboarding
       </p>
       <h1 className="mt-4 text-4xl font-bold tracking-tight text-gray-900">
-        Add your first contribution
+        {hasExistingContributionData ? "Update your expertise profile" : "Add your first contribution"}
       </h1>
       <p className="mt-4 text-lg text-gray-600">
-        This is the structured data that powers your public profile, category links,
-        and future org cluster.
+        {hasExistingContributionData
+          ? "Refresh the account patterns and domain coverage behind your public profile."
+          : "This is the structured data that powers your public profile, category links, and future org cluster."}
       </p>
 
       <div className="mt-8 rounded-3xl border border-gray-200 bg-gray-50 p-5 text-sm text-gray-600">
@@ -61,6 +65,7 @@ export default async function OnboardingContributionPage() {
         <OnboardingContributionForm
           initialAccounts={context.accounts}
           initialDomains={context.domains}
+          submitLabel={hasExistingContributionData ? "Save expertise changes" : "Continue to profile"}
         />
       </div>
     </section>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import AccountSignInForm from "@/components/AccountSignInForm";
 import AccessRequestForm from "@/components/AccessRequestForm";
 import InviteTokenForm from "@/components/InviteTokenForm";
 import Link from "next/link";
@@ -87,6 +88,21 @@ export default async function JoinPage({
           <AccessRequestForm sourcePath="/join" />
         </div>
       </div>
+      <div className="mt-8 rounded-3xl border border-gray-200 p-6">
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-400">
+          Already a member?
+        </p>
+        <h2 className="mt-2 text-2xl font-semibold text-gray-900">
+          Send yourself a new sign-in link
+        </h2>
+        <p className="mt-3 text-sm text-gray-600">
+          If your profile already exists, you do not need to re-enter the invite flow.
+          Use your work email to jump straight back into your member workspace.
+        </p>
+        <div className="mt-6">
+          <AccountSignInForm sourceLabel="your member workspace" />
+        </div>
+      </div>
       <div className="mt-8 flex flex-wrap gap-3">
         <Link
           href="/about"
@@ -99,6 +115,12 @@ export default async function JoinPage({
           className="inline-flex items-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
           View Project Gate
+        </Link>
+        <Link
+          href="/me"
+          className="inline-flex items-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          My Signal.lab
         </Link>
       </div>
     </section>

@@ -15,6 +15,7 @@ import type { MemberAccount } from "@/types";
 interface OnboardingContributionFormProps {
   initialAccounts: MemberAccount[];
   initialDomains: string[];
+  submitLabel?: string;
 }
 
 function createEmptyAccount(): MemberAccount {
@@ -29,6 +30,7 @@ function createEmptyAccount(): MemberAccount {
 export default function OnboardingContributionForm({
   initialAccounts,
   initialDomains,
+  submitLabel = "Continue to profile",
 }: OnboardingContributionFormProps) {
   const router = useRouter();
   const [accounts, setAccounts] = useState<MemberAccount[]>(
@@ -307,7 +309,7 @@ export default function OnboardingContributionForm({
         disabled={!canSubmit || isSubmitting}
         className="inline-flex items-center rounded-2xl bg-gray-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isSubmitting ? "Publishing your profile foundation..." : "Continue to profile"}
+        {isSubmitting ? "Saving your expertise..." : submitLabel}
       </button>
     </form>
   );
