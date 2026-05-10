@@ -219,6 +219,55 @@ default.
 - Articles should link out to multiple proof snippets and category/vendor pages
 - A buyer-agent or vendor-agent should be able to compile evidence from both profile JSON and proof snippets into a research brief or shortlist
 
+### Proof of reach and contact graph
+
+Part of the user value proposition is not just publishing personal IP, but seeing
+evidence that it is being discovered. Signal.lab should therefore promise evidence
+of reach, not impossible certainty about every unseen LLM citation.
+
+**The product promise:**
+- show contributors that their pages are being crawled, indexed, surfaced, clicked, and contacted
+- show which topics and page types are earning attention
+- show where content is stale, weak, or under-structured
+- create a direct path from discovery to inbound contact on Signal.lab
+
+**Five proof states to expose in the member dashboard:**
+- `Crawled` - verified bot visits and fetches across public pages
+- `Indexed` - page is indexable and known to major search surfaces
+- `Surfaced` - page earned impressions in search or surfaced in agent discovery flows
+- `Clicked` - user clicked through to the Signal.lab page
+- `Contacted` - user clicked a CTA, requested contact, requested intro, or asked to share more
+
+**Evidence sources to use:**
+- `request_events` for bot-family crawl and fetch evidence
+- Google Search Console imports for impressions, clicks, CTR, queries, and page-level visibility
+- URL inspection / page indexing checks for page status and indexability
+- on-platform CTA clicks, contact requests, and disclosure requests
+- referral and UTM data where available
+
+**What commercial users should publish to maximize reach:**
+- structured domain briefs tied to real categories such as microsegmentation
+- anonymised proof snippets with lessons learned, outcomes delivered, and blockers
+- buyer-facing RFP guidance, evaluation criteria, and implementation pitfalls
+- vendor or product expertise tied to real market patterns
+- thought-leadership articles that synthesize multiple proof snippets into a commercial point of view
+
+**Commercial reach goal:**
+- a buyer-side agent researching a category should be able to find:
+  - named contributor
+  - company name
+  - category and vendor expertise
+  - anonymised evidence of relevant customer exposure
+  - a `Contact me` or `Request intro` path back into Signal.lab
+- this should be designed as a realistic optimization target, not a guarantee that every search engine or chatbot will always display the CTA
+
+**Retention loop to keep contributors updating their profile:**
+- show freshness scores and stale-page alerts
+- show which domains or vendors are getting impressions but have weak proof coverage
+- suggest missing snippet types such as failure story, objection story, or buyer checklist
+- show which pages earned the most crawl, surface, and contact activity over the last 7/30/90 days
+- reward contributors with visible proof that updating content leads to more reach
+
 ### Content graph build priorities
 
 1. [HIGH] Add schema.org JSON-LD to all existing pages (/p/, /org/, /insights/, /c/)
@@ -230,8 +279,10 @@ default.
 7. [MED]  Update sitemap.ts with correct priority tiers and dynamic lastModified
 8. [MED]  Add proof snippet nodes and public/anonymised market-proof JSON endpoints
 9. [MED]  Add vendor/product expertise graph to profiles and search
-10. [P2]  Enable pgvector in Supabase - embeddings pipeline for semantic search
-11. [P2]  Add sameAs LinkedIn URL to member profiles and data.json
+10. [MED]  Add proof-of-reach dashboards and contact-request CTAs for contributors
+11. [MED]  Import search visibility evidence into member analytics
+12. [P2]  Enable pgvector in Supabase - embeddings pipeline for semantic search
+13. [P2]  Add sameAs LinkedIn URL to member profiles and data.json
 ---
 
 ## 5. Supabase schema — tables to build
@@ -344,6 +395,51 @@ purpose         text not null
 status          text not null default 'pending' -- pending | approved | rejected | expired
 created_at      timestamptz default now()
 updated_at      timestamptz default now()
+```
+
+### search_surface_metrics (imported visibility evidence)
+```sql
+id             uuid primary key default gen_random_uuid()
+member_id      uuid references members(id)
+page_path      text not null
+page_type      text not null      -- profile | article | proof | category | vendor
+surface        text not null      -- google-search | google-news | chatgpt-search | bing
+query          text
+impressions    integer not null default 0
+clicks         integer not null default 0
+ctr            numeric(6,4)
+avg_position   numeric(8,2)
+measured_on    date not null
+created_at     timestamptz default now()
+updated_at     timestamptz default now()
+```
+
+### contact_requests (discovery-to-contact workflow)
+```sql
+id               uuid primary key default gen_random_uuid()
+owner_member_id  uuid references members(id)
+requester_email  text not null
+requester_name   text
+requester_company text
+source_type      text not null    -- profile | proof | article | org | category
+source_slug      text
+request_type     text not null    -- contact | intro | share-request | rfp
+message          text
+status           text not null default 'new' -- new | acknowledged | responded | closed
+created_at       timestamptz default now()
+updated_at       timestamptz default now()
+```
+
+### cta_events (proof of commercial response)
+```sql
+id            uuid primary key default gen_random_uuid()
+member_id     uuid references members(id)
+source_type   text not null      -- profile | proof | article
+source_slug   text
+cta_type      text not null      -- contact-me | request-intro | request-share | outbound-link
+referrer      text
+query_params  jsonb
+created_at    timestamptz default now()
 ```
 
 ### invite_tokens
@@ -529,6 +625,53 @@ Each stage has a testable output that must pass before moving on.
 - Search can retrieve proof snippets by category, vendor, sector, and story type
 - Match-only rows influence counts without exposing text or names
 - Relationship access requests can be created and resolved without leaking private data
+
+---
+
+### Stage 04C - Proof of reach and contact graph
+**Depends on:** Stage 04B, Stage 05, existing request_events logging
+**New tables:** search_surface_metrics, contact_requests, cta_events
+
+**Build:**
+- Create `/me/reach` as the contributor evidence dashboard
+- Show the five proof states for every public node:
+  - crawled
+  - indexed
+  - surfaced
+  - clicked
+  - contacted
+- Add `Contact me`, `Request intro`, and `Request more detail` CTAs to:
+  - `/p/[slug]`
+  - `/proof/[slug]`
+  - selected `/insights/[slug]`
+- Log CTA events to `cta_events`
+- Build contact request workflow so buyers and buyer-agents can submit:
+  - contact requests
+  - intro requests
+  - share requests
+  - RFP-related follow-up requests
+- Import search visibility evidence into `search_surface_metrics`
+  - start with Google Search Console page-level data
+  - map metrics to member-owned profile, article, and proof pages
+- Show contributors:
+  - impressions
+  - clicks
+  - CTR
+  - average position
+  - top queries where available
+  - bot-family crawl activity from `request_events`
+- Add freshness prompts:
+  - pages with impressions but weak CTR
+  - pages with crawl activity but no recent updates
+  - domains/vendors with demand but missing proof snippets
+
+**Test before moving on:**
+- `/me/reach` shows page-level evidence for public member content
+- CTA clicks and contact requests are logged and visible to the contributor
+- Search Console imports map to the correct member page paths
+- The dashboard distinguishes crawl evidence from click evidence from lead evidence
+- Public pages expose visible contact CTAs without leaking private account data
+- Contributors can see which content types are actually driving discovery and response
 
 ---
 
