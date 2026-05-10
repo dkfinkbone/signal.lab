@@ -6,6 +6,7 @@ import {
   categoryCanonical,
   orgCanonical,
   profileCanonical,
+  siteUrl as canonicalSiteUrl,
   teaserCanonical,
 } from "@/lib/canonical";
 import { collectCategoryRouteParams, getCategoryRouteParam } from "@/lib/categories";
@@ -20,7 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const categories = collectCategoryRouteParams(
     articles.map((article) => article.category).filter(Boolean)
   );
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://signal.lab";
+  const siteUrl = canonicalSiteUrl();
   const [profileRows, orgRows] = await Promise.all([
     getProfileSitemapEntries(),
     getOrgSitemapEntries(),

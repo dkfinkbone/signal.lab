@@ -1,6 +1,6 @@
 # CODEX_HANDOFF.md
 
-Updated: 2026-05-10
+Updated: 2026-05-11
 
 This file is the current Codex handoff for Claude Code after the hosted
 Supabase onboarding/config pass.
@@ -14,12 +14,12 @@ Read this after:
 - Repo: `https://github.com/dkfinkbone/signal.lab.git`
 - Active branch: `feature/claude-build-001`
 - Recent branch history includes:
+  - `ea02473` - `docs: add proof of reach roadmap`
+  - `cbb6c13` - `docs: add market proof graph roadmap`
+  - `074959e` - `feat: add returning member workspace`
+  - `36088bb` - `feat: add access request and token entry flow`
   - `2cdd921` - `feat: add profile json database webhooks`
-  - `4930488` - `chore: sync remote Supabase migrations`
-  - `e7668c6` - `chore: harden Supabase onboarding config`
-  - `2004380` - `docs: add Codex onboarding handoff`
-  - `562afd7` - `feat: add onboarding member graph foundation`
-  - `b55e9d7` - `feat: add dynamic llms and structured profile endpoints`
+  - `30e23a3` - `docs: refresh Claude and Codex handoffs`
 
 ## What Codex completed
 
@@ -142,6 +142,43 @@ Codex also added a real token-entry and access-request layer:
 - new migration:
   - `20260510204031_add_access_requests.sql`
 
+### 8. Returning-member workspace is now live
+
+Codex added a real returning-member surface:
+
+- `/me`
+  - resend sign-in link flow
+  - profile edit form
+  - contribution edit entry point
+- `/api/auth/request-sign-in-link`
+- `/api/account/profile`
+
+The verify flow now returns existing members to `/me` instead of always forcing
+them back through first-time onboarding.
+
+### 9. Homepage discoverability remediation is now on the branch
+
+Codex hardened the landing page against the LLM discoverability scan findings:
+
+- `src/lib/canonical.ts`
+  - default canonical fallback is now `https://signal-lab.connxr.com`
+  - site URL is read dynamically from `NEXT_PUBLIC_SITE_URL`
+- `src/lib/metadata.ts`
+  - shared page/article metadata now adds:
+    - Open Graph
+    - Twitter card
+    - author / creator / publisher fields
+- `src/lib/json-ld.ts`
+  - homepage now emits:
+    - `WebSite`
+    - `Organization`
+    - `FAQPage`
+- `src/app/page.tsx`
+  - landing page now includes visible extractable content using:
+    - `<dl>`
+    - `<table>`
+    - `<details>/<summary>`
+
 ## Current behavior
 
 ### Minimal invite model
@@ -195,6 +232,9 @@ npm run lint
 npm run build
 ```
 
+Current branch test count after the homepage discoverability pass:
+- `77/77` Jest tests passing
+
 Supabase state verified:
 - local and remote migration history are aligned
 - onboarding/profile migrations are applied
@@ -211,6 +251,11 @@ The webhook payload assumptions currently expect:
 - `schema`
 - `record`
 - `old_record`
+
+Discoverability state verified locally:
+- homepage metadata now includes social and attribution fields
+- homepage JSON-LD now exists
+- homepage extractable FAQ/table/definition-list structure now exists
 
 ## Important implementation caveats
 
@@ -257,22 +302,23 @@ Do not build Signal.lab features on top of:
 
 Treat that migration as legacy cross-project contamination only.
 
+### Canonical host caveat
+
+If Vercel preview scans still report `https://signal.lab`, the issue is no longer
+the code helper. It means:
+- `NEXT_PUBLIC_SITE_URL` is still stale in Vercel, or
+- the scan is hitting an older deployment
+
 ## Recommended next sequence for Claude
 
 ### Immediate next step
 
-Do **not** redo the already-finished Supabase work.
+Do **not** redo the already-finished Supabase work or the homepage discoverability pass.
 
 Instead:
-1. run a real hosted smoke test:
-   - `/join/[token]`
-   - `/join/[token]/signup`
-   - magic-link click
-   - `/onboarding/contribute`
-   - `/onboarding/profile`
-   - `/p/[slug]`
-   - `/org/[slug]` after second member from same domain
-2. confirm `profile_json` regeneration actually fires after writes
+1. rerun the homepage/preview discoverability scan against the latest deployment
+2. verify Vercel `NEXT_PUBLIC_SITE_URL` and redeploy if the scan still reports `https://signal.lab`
+3. start Stage 04B market-proof graph work from `SIGNAL_LAB_PLAN.md`
 
 ### After that
 
@@ -284,14 +330,14 @@ Option A - finish Stage 01 properly
 - replace env-token fallback with real token validation
 - add invite analytics to admin dashboard
 
-Option B - harden the new onboarding flow
-- add Supabase session refresh proxy support
-- add more E2E coverage
-- verify category/profile/org internal linking behavior in preview/prod
+Option B - build Stage 04B / Stage 04C
+- extend `/me` and `/onboarding/contribute` with vendor expertise and anonymised account evidence
+- build `/proof/[slug]` and `/proof/[slug]/data.json`
+- add proof-of-reach/contact workflow surfaces such as `/me/reach`
 
 Recommended order:
-- do Option A first if the priority is the real invite loop
-- do Option B first if the immediate goal is a reliable demoable onboarding path
+- do Option B first if the priority is contributor value and LLM-attributable market proof
+- do Option A first if the priority is the real invite loop and viral network growth
 
 ## What Claude should not assume
 

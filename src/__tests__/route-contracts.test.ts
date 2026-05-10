@@ -9,7 +9,7 @@
  * Playwright or a Next.js test harness once the app is running.
  */
 
-import { articleJsonLd } from "@/lib/json-ld";
+import { articleJsonLd, homeJsonLd } from "@/lib/json-ld";
 import {
   articleCanonical,
   articleDataCanonical,
@@ -239,12 +239,37 @@ describe("articleMetadata", () => {
       `${SITE}/insights/${published.slug}`
     );
   });
+
+  it("includes social metadata", () => {
+    expect((meta.openGraph as Record<string, unknown>).siteName).toBe("Signal.lab");
+    expect((meta.twitter as Record<string, unknown>).card).toBe("summary_large_image");
+  });
 });
 
 describe("pageMetadata", () => {
   it("builds canonical from NEXT_PUBLIC_SITE_URL + path", () => {
     const meta = pageMetadata("Insights", "All articles.", "/insights");
     expect((meta.alternates as Record<string, string>).canonical).toBe(`${SITE}/insights`);
+  });
+
+  it("includes open graph, twitter, and author defaults", () => {
+    const meta = pageMetadata("Insights", "All articles.", "/insights");
+    expect((meta.openGraph as Record<string, unknown>).siteName).toBe("Signal.lab");
+    expect((meta.twitter as Record<string, unknown>).card).toBe("summary_large_image");
+    expect(meta.authors).toEqual([{ name: "Signal.lab" }]);
+  });
+});
+
+describe("homeJsonLd", () => {
+  it("exposes website, organization, and FAQ entities", () => {
+    const ld = homeJsonLd() as Record<string, unknown>;
+    const graph = ld["@graph"] as Array<Record<string, unknown>>;
+    const types = graph.map((entry) => entry["@type"]);
+
+    expect(ld["@context"]).toBe("https://schema.org");
+    expect(types).toContain("WebSite");
+    expect(types).toContain("Organization");
+    expect(types).toContain("FAQPage");
   });
 });
 

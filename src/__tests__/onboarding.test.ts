@@ -15,6 +15,10 @@ import {
 } from "@/lib/onboarding";
 import type { PublicMember, PublicOrg } from "@/types";
 
+const SITE = "https://signal-lab.connxr.com";
+
+process.env.NEXT_PUBLIC_SITE_URL = SITE;
+
 describe("onboarding helpers", () => {
   it("accepts work emails in signup drafts", () => {
     const draft = parseSignupDraft({
@@ -226,15 +230,15 @@ describe("buildProfileJsonDocument", () => {
     });
 
     expect(payload["@type"]).toBe("Person");
-    expect(payload.url).toBe("https://signal.lab/p/jane-smith");
+    expect(payload.url).toBe(`${SITE}/p/jane-smith`);
     expect(
       ((payload.worksFor as Record<string, unknown>).url as string | undefined) ?? ""
-    ).toBe("https://signal.lab/org/acme");
+    ).toBe(`${SITE}/org/acme`);
     expect(
       ((payload.expertise as Record<string, unknown>).categories as string[]) ?? []
     ).toEqual(["zero-trust", "microsegmentation"]);
     expect((payload.insights as string[]) ?? []).toEqual([
-      "https://signal.lab/insights/example-article",
+      `${SITE}/insights/example-article`,
     ]);
   });
 });

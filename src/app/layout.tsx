@@ -5,6 +5,7 @@ import {
   Instrument_Sans,
 } from "next/font/google";
 import Link from "next/link";
+import { siteUrl } from "@/lib/canonical";
 import "./globals.css";
 
 const dmSerif = DM_Serif_Display({
@@ -28,9 +29,21 @@ const instrument = Instrument_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
   title: { default: "Signal.lab", template: "%s | Signal.lab" },
   description: "Agent-readable publishing platform for expert knowledge nodes.",
+  authors: [{ name: "Signal.lab" }],
+  creator: "Signal.lab",
+  publisher: "Signal.lab",
   robots: { index: true, follow: true },
+  openGraph: {
+    siteName: "Signal.lab",
+    type: "website",
+    url: siteUrl(),
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export default function RootLayout({

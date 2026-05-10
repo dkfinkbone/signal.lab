@@ -1,10 +1,9 @@
 import { MetadataRoute } from "next";
 import { headers } from "next/headers";
+import { siteUrl } from "@/lib/canonical";
 import { logRequestEventFromHeaders } from "@/lib/log-event";
 
 export default async function robots(): Promise<MetadataRoute.Robots> {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://signal.lab";
-
   await logRequestEventFromHeaders({
     headers: await headers(),
     path: "/robots.txt",
@@ -25,7 +24,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
       { userAgent: "ClaudeBot", allow: "/" },
       { userAgent: "PerplexityBot", allow: "/" },
     ],
-    sitemap: `${siteUrl}/sitemap.xml`,
-    host: siteUrl,
+    sitemap: `${siteUrl()}/sitemap.xml`,
+    host: siteUrl(),
   };
 }

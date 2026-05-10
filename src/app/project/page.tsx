@@ -2,25 +2,23 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
 import InviteTokenForm from "@/components/InviteTokenForm";
+import { siteUrl } from "@/lib/canonical";
 import { getAuthenticatedUser } from "@/lib/supabase-auth-server";
 import { isInviteTokenAccepted } from "@/lib/invite-tokens";
 import { logRequestEventFromHeaders } from "@/lib/log-event";
-
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://signal.lab";
 
 export const metadata: Metadata = {
   title: "Project Brief - Signal.lab",
   description:
     "The objectives, hypothesis, and intended outcomes of the Signal.lab trusted knowledge network. Read the full project brief.",
   alternates: {
-    canonical: `${siteUrl}/project`,
+    canonical: `${siteUrl()}/project`,
   },
   openGraph: {
     title: "Signal.lab - Project Brief",
     description:
       "Objectives, phases, and intended outcomes of the Signal.lab network. A strategic briefing for contributors, vendors, and channel partners.",
-    url: `${siteUrl}/project`,
+    url: `${siteUrl()}/project`,
     siteName: "Signal.lab",
     type: "article",
   },

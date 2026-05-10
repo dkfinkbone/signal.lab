@@ -1,6 +1,6 @@
 # Signal.lab - Claude Snapshot
 
-Updated: 2026-05-10
+Updated: 2026-05-11
 
 This file is the current build/deploy handoff for Claude and Codex.
 Prefer this over older assumptions.
@@ -13,12 +13,12 @@ Prefer this over older assumptions.
 - Local branches currently present: `feature/claude-build-001`, `main`
 - There is no local `staging` branch at the moment.
 - Recent branch history includes:
+  - `ea02473` - `docs: add proof of reach roadmap`
+  - `cbb6c13` - `docs: add market proof graph roadmap`
+  - `074959e` - `feat: add returning member workspace`
+  - `36088bb` - `feat: add access request and token entry flow`
   - `2cdd921` - `feat: add profile json database webhooks`
-  - `4930488` - `chore: sync remote Supabase migrations`
-  - `e7668c6` - `chore: harden Supabase onboarding config`
-  - `2004380` - `docs: add Codex onboarding handoff`
-  - `562afd7` - `feat: add onboarding member graph foundation`
-  - `b55e9d7` - `feat: add dynamic llms and structured profile endpoints`
+  - `30e23a3` - `docs: refresh Claude and Codex handoffs`
 
 ## Domain and URL State
 
@@ -35,7 +35,10 @@ Prefer this over older assumptions.
     from the incoming request origin, not from `NEXT_PUBLIC_SITE_URL`.
   - This reduces preview/prod mismatch risk for the magic-link flow.
   - Canonical tags, sitemap URLs, robots host fields, and `llms.txt` still depend
-    on `NEXT_PUBLIC_SITE_URL`.
+    on `NEXT_PUBLIC_SITE_URL`, but now route through `src/lib/canonical.ts`
+    with a code fallback of `https://signal-lab.connxr.com`.
+  - If scanners still report `https://signal.lab`, the Vercel env value or
+    deployment is stale rather than the canonical helper.
   - `.env.local.example` still contains `https://signal.lab` as a placeholder and
     should not be treated as the live source of truth.
 
@@ -68,6 +71,7 @@ Public routes currently implemented:
 - `/join/[token]`
 - `/join/[token]/signup`
 - `/join/verify`
+- `/me`
 - `/onboarding/contribute`
 - `/onboarding/profile`
 - `/p/[slug]`
@@ -106,12 +110,24 @@ Admin routes currently implemented:
 - `/join` now includes a real invite-token entry form.
 - Gated `/project` now includes an invite-token entry form.
 - `/join` now includes a real access-request form backed by Supabase.
+- `/me` now acts as the returning-member workspace:
+  - resend sign-in link
+  - profile edit
+  - contribution edit entry point
 - The profile/org graph routes are now in the app and backed by:
   - `members`
   - `orgs`
   - `accounts`
   - `member_domains`
   - `access_requests`
+- Homepage discoverability/trust work now includes:
+  - Open Graph and Twitter metadata via shared metadata helpers
+  - author, creator, and publisher metadata
+  - WebSite + Organization + FAQ JSON-LD on `/`
+  - visible extractable structure on `/` using:
+    - `<dl>`
+    - `<table>`
+    - `<details>/<summary>`
 
 ## Supabase State
 
@@ -284,6 +300,8 @@ src/components/AccessRequestForm.tsx
 src/proxy.ts
 src/lib/articles.ts
 src/lib/canonical.ts
+src/lib/metadata.ts
+src/lib/json-ld.ts
 src/lib/log-event.ts
 src/lib/bot-detection.ts
 src/lib/ip-hash.ts
@@ -312,10 +330,18 @@ npm run lint
 npm run build
 ```
 
+Current branch test count after the homepage discoverability pass:
+- `77/77` Jest tests passing
+
 ## Current Open Issues / Gotchas
 
 - The invite system is still on the temporary `PROJECT_INVITE_TOKENS` bridge and
   does not yet implement `invite_tokens` / `invite_events`.
+- If the preview/homepage scan still reports `https://signal.lab`, Vercel needs:
+  - `NEXT_PUBLIC_SITE_URL=https://signal-lab.connxr.com`
+  - a fresh redeploy
+- Homepage discoverability fixes are on this branch, but preview scans must be
+  rerun against the latest deployment to validate them.
 - Preview deployments are still not the right place to judge real
   indexing/citation behavior.
 - Admin uses browser Basic Auth prompts, not an in-app login form.

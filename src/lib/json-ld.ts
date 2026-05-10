@@ -38,6 +38,81 @@ export function articleJsonLd(article: Article): object {
   };
 }
 
+export function homeJsonLd(): object {
+  const baseUrl = siteUrl();
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${baseUrl}#organization`,
+        name: "Signal.lab",
+        url: baseUrl,
+        description:
+          "Agent-readable publishing platform for attributable expert knowledge in B2B technology.",
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${baseUrl}#website`,
+        url: baseUrl,
+        name: "Signal.lab",
+        description:
+          "Crawlable expert knowledge nodes for buyers, search engines, and LLM agents.",
+        publisher: {
+          "@id": `${baseUrl}#organization`,
+        },
+        potentialAction: {
+          "@type": "SearchAction",
+          target: `${baseUrl}/api/search?q={search_term_string}`,
+          "query-input": "required name=search_term_string",
+        },
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: [
+          {
+            "@type": "Question",
+            name: "What should contributors publish on Signal.lab?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text:
+                "Contributors should publish category expertise, proof snippets, customer-pattern evidence, and longer articles that synthesize lessons learned.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "Can buyers and LLM agents attribute expertise back to a real person?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text:
+                "Yes. Public contributor pages are server-rendered and linked to machine-readable JSON so category expertise, company affiliation, and authored knowledge can be cited back to the contributor.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "Does Signal.lab expose named customer accounts publicly?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text:
+                "No. The platform is designed around anonymized market proof by default, so contributors can publish sectors, regions, outcomes, and lessons learned without exposing named customer accounts.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "How does Signal.lab prove discoverability to contributors?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text:
+                "Signal.lab logs crawler visits and is designed to surface indexing, impression, click, and contact evidence so contributors can see whether their pages are being discovered and acted on.",
+            },
+          },
+        ],
+      },
+    ],
+  };
+}
+
 export function categoryJsonLd(
   category: string,
   routeParam = category,

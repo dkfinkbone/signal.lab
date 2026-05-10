@@ -1,7 +1,7 @@
 # SIGNAL_LAB_PLAN.md
 # Product plan, decisions, and build roadmap for Signal.lab
 # Read alongside CLAUDE.md before making any changes.
-# Last updated: 10 May 2026
+# Last updated: 11 May 2026
 
 ---
 
@@ -34,6 +34,12 @@ managed-services · cloud-infra · ucc
 - NEXT_PUBLIC_SITE_URL: https://signal-lab.connxr.com
 - See CLAUDE.md for full deployment snapshot, env vars, and file map
 
+**Homepage discoverability state:**
+- `/` now ships WebSite + Organization + FAQ JSON-LD for machine parsing
+- Shared metadata now emits canonical, Open Graph, Twitter card, author, creator, and publisher fields
+- The landing page now includes extractable `<dl>`, `<table>`, and `<details>/<summary>` content aimed at buyer and agent queries
+- If a crawler scan still reports `https://signal.lab`, the active Vercel `NEXT_PUBLIC_SITE_URL` or deployment is stale rather than the code path
+
 **Pages already built and deployed:**
 - /me             — returning member workspace (sign-in link, profile edit, contribution edit)
 - /about          — public explainer page (SSR, indexed)
@@ -51,12 +57,13 @@ managed-services · cloud-infra · ucc
 ## 3. Architecture principles — never violate these
 
 1. All public content pages are SSR. No `'use client'` on indexable routes.
-2. Every public page.tsx exports generateMetadata with og:title, og:description, canonical.
+2. Every public page.tsx exports machine-readable metadata with canonical, Open Graph, and Twitter fields. JSON-LD should be added wherever the page represents a real entity or FAQ surface.
 3. Canonical URLs always built via src/lib/canonical.ts — never constructed manually.
 4. All intent events written server-side via src/lib/log-event.ts → request_events table.
 5. SUPABASE_SERVICE_ROLE_KEY is server-only. Never import supabase-service.ts in client components.
 6. No hardcoded credentials in source files.
 7. npm test && npm run lint && npm run build must pass before every commit.
+8. Public trust pages should expose extractable structure, not just marketing copy. Prefer visible FAQs, definition lists, and tables when they materially help buyer and agent retrieval.
 
 ---
 
@@ -270,19 +277,24 @@ of reach, not impossible certainty about every unseen LLM citation.
 
 ### Content graph build priorities
 
-1. [HIGH] Add schema.org JSON-LD to all existing pages (/p/, /org/, /insights/, /c/)
-2. [HIGH] Add data.json endpoint at every node type
-3. [HIGH] Upgrade llms.txt to full structured manifest
-4. [HIGH] Implement explicit bidirectional anchor links in SSR HTML across all node types
-5. [MED]  Build /v/[vendor] vendor node pages
-6. [MED]  Add "related content" links on all nodes (same category, same org, same vendor)
-7. [MED]  Update sitemap.ts with correct priority tiers and dynamic lastModified
-8. [MED]  Add proof snippet nodes and public/anonymised market-proof JSON endpoints
-9. [MED]  Add vendor/product expertise graph to profiles and search
-10. [MED]  Add proof-of-reach dashboards and contact-request CTAs for contributors
-11. [MED]  Import search visibility evidence into member analytics
-12. [P2]  Enable pgvector in Supabase - embeddings pipeline for semantic search
-13. [P2]  Add sameAs LinkedIn URL to member profiles and data.json
+Current state:
+- JSON-LD is already live on the homepage trust surface and core entity pages such as profiles, orgs, categories, and insight articles
+- data.json endpoints already exist for insights, categories, profiles, and orgs
+- llms.txt is already a structured manifest
+
+Next priorities:
+1. [HIGH] Implement explicit bidirectional anchor links in SSR HTML across all node types
+2. [HIGH] Keep canonical, sitemap, robots, and llms host values aligned with `NEXT_PUBLIC_SITE_URL` across preview and production environments
+3. [HIGH] Extend JSON-LD and machine-readable metadata to future vendor and proof-snippet nodes
+4. [MED]  Build /v/[vendor] vendor node pages
+5. [MED]  Add "related content" links on all nodes (same category, same org, same vendor)
+6. [MED]  Update sitemap.ts with correct priority tiers and dynamic lastModified
+7. [MED]  Add proof snippet nodes and public/anonymised market-proof JSON endpoints
+8. [MED]  Add vendor/product expertise graph to profiles and search
+9. [MED]  Add proof-of-reach dashboards and contact-request CTAs for contributors
+10. [MED]  Import search visibility evidence into member analytics
+11. [P2]  Enable pgvector in Supabase - embeddings pipeline for semantic search
+12. [P2]  Add sameAs LinkedIn URL to member profiles and data.json
 ---
 
 ## 5. Supabase schema — tables to build
@@ -978,6 +990,16 @@ route_type: 'vendor'          for /v/[vendor]
 
 ## 15. Build order summary
 
+Current status snapshot:
+- Done: `/about`, `/project`, pilot join flow, magic-link onboarding, contribution flow, profile/org graph, `/me`, and homepage trust/discoverability remediation
+- Next: Stage 01 real invite infrastructure (`invite_tokens`, `invite_events`, real token APIs)
+- Then: Stage 04B market proof graph
+- Then: Stage 04C proof of reach and contact graph
+- Then: Stage 06 invite others / email onramp
+- Parallel: keep canonical host envs aligned across Vercel, add bidirectional links, and expand JSON-LD/data.json coverage to future proof and vendor nodes
+
+Historical stage sequence from the original staged roadmap:
+
 ```
 DONE  /about and /project pages
 DONE  App live at signal-lab.connxr.com
@@ -1024,6 +1046,8 @@ PHASE 3:
 | 7 May 2026 | Content graph architecture defined — node types, JSON schema, llms.txt spec |
 | 7 May 2026 | User onboarding broken into 6 discrete build stages |
 | 8 May 2026 | SIGNAL_LAB_PLAN.md consolidated and written for Codex handoff |
+| 10 May 2026 | Market-proof graph and proof-of-reach roadmap added |
+| 11 May 2026 | Homepage trust/discoverability work landed: JSON-LD, richer metadata, and extractable FAQ/table/definition-list content |
 
 ---
 

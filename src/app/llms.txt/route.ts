@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPublishedArticles } from "@/lib/articles";
+import { siteUrl } from "@/lib/canonical";
 import {
   collectCategoryRouteParams,
   getCategoryLabel,
@@ -15,9 +16,7 @@ import { logRequestEvent } from "@/lib/log-event";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const base =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://signal-lab.connxr.com";
+  const base = siteUrl();
 
   const [articles, memberCount, orgCount, contributorCounts] = await Promise.all([
     getPublishedArticles(),

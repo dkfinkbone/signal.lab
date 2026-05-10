@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { articleCanonical } from "./canonical";
+import { articleCanonical, siteUrl } from "./canonical";
 import type { Article } from "@/types";
 
 export function articleMetadata(article: Article): Metadata {
@@ -7,14 +7,23 @@ export function articleMetadata(article: Article): Metadata {
   return {
     title: article.headline,
     description: article.summary,
+    authors: article.author_name ? [{ name: article.author_name }] : [{ name: "Signal.lab" }],
+    creator: article.author_name || "Signal.lab",
+    publisher: "Signal.lab",
     alternates: { canonical: url },
     openGraph: {
       title: article.headline,
       description: article.summary,
       url,
+      siteName: "Signal.lab",
       type: "article",
       publishedTime: article.published_at ?? undefined,
       modifiedTime: article.updated_at,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: article.headline,
+      description: article.summary,
     },
   };
 }
@@ -24,13 +33,26 @@ export function pageMetadata(
   description: string,
   canonicalPath: string
 ): Metadata {
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://signal.lab";
-  const url = `${siteUrl}${canonicalPath}`;
+  const baseUrl = siteUrl();
+  const url = `${baseUrl}${canonicalPath}`;
   return {
     title,
     description,
+    authors: [{ name: "Signal.lab" }],
+    creator: "Signal.lab",
+    publisher: "Signal.lab",
     alternates: { canonical: url },
-    openGraph: { title, description, url },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "Signal.lab",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
   };
 }

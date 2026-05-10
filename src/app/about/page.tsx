@@ -1,23 +1,21 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
+import { siteUrl } from "@/lib/canonical";
 import { logRequestEventFromHeaders } from "@/lib/log-event";
-
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://signal.lab";
 
 export const metadata: Metadata = {
   title: "About Signal.lab - Trusted B2B Technology Intelligence Network",
   description:
     "Signal.lab is a verified knowledge network for channel professionals. Contribute structured expertise, get attributed, and get found by buyers and agents.",
   alternates: {
-    canonical: `${siteUrl}/about`,
+    canonical: `${siteUrl()}/about`,
   },
   openGraph: {
     title: "About Signal.lab",
     description:
       "A trusted network where channel expertise becomes structured, attributed, and agent-readable intelligence.",
-    url: `${siteUrl}/about`,
+    url: `${siteUrl()}/about`,
     siteName: "Signal.lab",
     type: "website",
   },

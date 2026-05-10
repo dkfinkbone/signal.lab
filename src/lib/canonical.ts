@@ -1,9 +1,8 @@
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-  "https://signal.lab";
-
 export function siteUrl(): string {
-  return SITE_URL;
+  return (
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+    "https://signal-lab.connxr.com"
+  );
 }
 
 export function articlePath(slug: string): string {
@@ -11,7 +10,7 @@ export function articlePath(slug: string): string {
 }
 
 export function canonicalFor(path: string): string {
-  return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+  return `${siteUrl()}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 export function articleCanonical(slug: string): string {
