@@ -12,7 +12,7 @@ Prefer this over older assumptions.
 - Active build branch: `feature/claude-build-001`
 - Local branches currently present: `feature/claude-build-001`, `main`
 - There is no local `staging` branch at the moment.
-- Current branch head:
+- Recent branch history includes:
   - `4930488` - `chore: sync remote Supabase migrations`
   - `e7668c6` - `chore: harden Supabase onboarding config`
   - `2004380` - `docs: add Codex onboarding handoff`
@@ -153,9 +153,12 @@ Admin routes currently implemented:
 - `supabase/config.toml` now persists:
   - `[functions.generate-profile-json]`
   - `verify_jwt = false`
-- Remaining manual hosted step:
-  - create database webhooks for `members`, `accounts`, and `member_domains`
-    targeting `generate-profile-json`
+- Database webhook triggers are now configured via migration:
+  - `20260510165945_add_profile_json_webhooks.sql`
+- Current webhook triggers:
+  - `members_generate_profile_json_webhook`
+  - `accounts_generate_profile_json_webhook`
+  - `member_domains_generate_profile_json_webhook`
 
 ## Reporting and Attribution
 
@@ -300,7 +303,6 @@ npm run build
 
 ## Current Open Issues / Gotchas
 
-- The main remaining Supabase task is manual database webhook creation.
 - The invite system is still on the temporary `PROJECT_INVITE_TOKENS` bridge and
   does not yet implement `invite_tokens` / `invite_events`.
 - Preview deployments are still not the right place to judge real

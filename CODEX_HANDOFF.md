@@ -13,7 +13,7 @@ Read this after:
 
 - Repo: `https://github.com/dkfinkbone/signal.lab.git`
 - Active branch: `feature/claude-build-001`
-- Current branch head:
+- Recent branch history includes:
   - `4930488` - `chore: sync remote Supabase migrations`
   - `e7668c6` - `chore: harden Supabase onboarding config`
   - `2004380` - `docs: add Codex onboarding handoff`
@@ -111,6 +111,19 @@ Codex fetched and committed them so local and remote history match:
 - `20260503125655_attribution_rpc_functions.sql`
 - `20260507230140_create_football_stats_tables.sql`
 
+### 6. Database webhooks are now configured
+
+Codex created and applied:
+- `supabase/migrations/20260510165945_add_profile_json_webhooks.sql`
+
+This migration adds:
+- `members_generate_profile_json_webhook`
+- `accounts_generate_profile_json_webhook`
+- `member_domains_generate_profile_json_webhook`
+
+These now POST to:
+- `https://imeppcpuwibvvyxmhiwo.supabase.co/functions/v1/generate-profile-json`
+
 ## Current behavior
 
 ### Minimal invite model
@@ -165,22 +178,12 @@ Supabase state verified:
 - onboarding/profile migrations are applied
 - `generate-profile-json` is deployed
 - hosted auth config is updated for the onboarding callback flow
+- database webhook triggers exist on:
+  - `members`
+  - `accounts`
+  - `member_domains`
 
-## Immediate Supabase gap
-
-### Manual database webhooks are still not configured
-
-This is now the main remaining hosted Supabase task.
-
-Manual Supabase dashboard work is still required for:
-- `members`
-- `accounts`
-- `member_domains`
-
-These should target:
-- `generate-profile-json`
-
-The function payload assumptions currently expect:
+The webhook payload assumptions currently expect:
 - `type`
 - `table`
 - `schema`
@@ -239,8 +242,7 @@ Treat that migration as legacy cross-project contamination only.
 Do **not** redo the already-finished Supabase work.
 
 Instead:
-1. create the three database webhooks in the Supabase dashboard
-2. run a real hosted smoke test:
+1. run a real hosted smoke test:
    - `/join/[token]`
    - `/join/[token]/signup`
    - magic-link click
@@ -248,7 +250,7 @@ Instead:
    - `/onboarding/profile`
    - `/p/[slug]`
    - `/org/[slug]` after second member from same domain
-3. confirm `profile_json` regeneration actually fires after writes
+2. confirm `profile_json` regeneration actually fires after writes
 
 ### After that
 
@@ -273,6 +275,5 @@ Recommended order:
 
 - Do not assume the football migration is product scope.
 - Do not assume `PROJECT_INVITE_TOKENS` is the long-term model.
-- Do not assume database webhooks are configured yet.
 - Do not assume the invite system tables already exist.
 - Do not assume Vercel `NEXT_PUBLIC_SITE_URL` is already corrected unless verified.
