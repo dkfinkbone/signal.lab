@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
+import InviteTokenForm from "@/components/InviteTokenForm";
 import { getAuthenticatedUser } from "@/lib/supabase-auth-server";
 import { isInviteTokenAccepted } from "@/lib/invite-tokens";
 import { logRequestEventFromHeaders } from "@/lib/log-event";
@@ -781,6 +782,14 @@ export default async function ProjectPage({
                     Use your invite link or request access to view the complete
                     document.
                   </p>
+                  <div style={{ textAlign: "left", marginBottom: "1.5rem" }}>
+                    <InviteTokenForm
+                      primaryTarget="project"
+                      tone="dark"
+                      inputLabel="Invite token"
+                      helperText="Paste the token here to open the full project brief without editing the URL manually."
+                    />
+                  </div>
                   <div>
                     <Link href="/join" className="btn-primary">
                       Request access -&gt;

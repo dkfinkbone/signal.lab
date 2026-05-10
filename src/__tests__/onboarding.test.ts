@@ -1,4 +1,5 @@
 import { buildProfileJsonDocument } from "@/lib/profile-json";
+import { parseAccessRequestPayload } from "@/lib/access-requests";
 import { isInviteTokenAccepted } from "@/lib/invite-tokens";
 import {
   calculateProfileScore,
@@ -73,6 +74,31 @@ describe("onboarding helpers", () => {
 
   it("caps profile score at 100", () => {
     expect(calculateProfileScore(20, 20)).toBe(100);
+  });
+
+  it("accepts work emails for access requests", () => {
+    const request = parseAccessRequestPayload({
+      name: "Jane Smith",
+      email: "jane@acme.com",
+      company: "",
+      role: "Advisor",
+      sourcePath: "/join",
+    });
+
+    expect(request.email).toBe("jane@acme.com");
+    expect(request.company).toBe("Acme");
+  });
+
+  it("rejects consumer domains for access requests", () => {
+    expect(() =>
+      parseAccessRequestPayload({
+        name: "Jane Smith",
+        email: "jane@gmail.com",
+        company: "",
+        role: "Advisor",
+        sourcePath: "/join",
+      })
+    ).toThrow("Use your work email to request access.");
   });
 });
 

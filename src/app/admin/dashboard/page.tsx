@@ -1,5 +1,5 @@
 import { getServiceClient } from "@/lib/supabase-service";
-import type { RequestEvent } from "@/types";
+import type { AccessRequest, RequestEvent } from "@/types";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +10,7 @@ interface SlugRow { slug: string; count: number }
 export default async function AttributionDashboard() {
   const client = getServiceClient();
 
-  const [latestRes, botRes, routeRes, slugRes] = await Promise.all([
+  const [latestRes, botRes, routeRes, slugRes, accessRes] = await Promise.all([
     // Latest 100 events
     client
       .from("request_events")
@@ -26,9 +26,16 @@ export default async function AttributionDashboard() {
 
     // By slug (top 20)
     client.rpc("attribution_by_slug"),
+
+    client
+      .from("access_requests")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(25),
   ]);
 
   const events: RequestEvent[] = latestRes.data ?? [];
+  const accessRequests: AccessRequest[] = accessRes.data ?? [];
   const knownBotEvents = events.filter(
     (event) => event.bot_family && event.bot_family !== "unknown"
   );
@@ -220,6 +227,54 @@ export default async function AttributionDashboard() {
       </section>
 
       {/* Latest 100 events */}
+      <section className="mb-10">
+        <h2 className="font-semibold mb-3 text-sm uppercase tracking-wider text-gray-500">
+          Latest Access Requests
+        </h2>
+        <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="bg-gray-50 border-b">
+              <tr>
+                <th className="text-left px-3 py-2 font-medium text-gray-600">Time</th>
+                <th className="text-left px-3 py-2 font-medium text-gray-600">Name</th>
+                <th className="text-left px-3 py-2 font-medium text-gray-600">Email</th>
+                <th className="text-left px-3 py-2 font-medium text-gray-600">Company</th>
+                <th className="text-left px-3 py-2 font-medium text-gray-600">Role</th>
+                <th className="text-left px-3 py-2 font-medium text-gray-600">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {accessRequests.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-3 py-6 text-center text-gray-400">
+                    No access requests recorded yet.
+                  </td>
+                </tr>
+              )}
+              {accessRequests.map((request) => (
+                <tr key={request.id} className="hover:bg-gray-50">
+                  <td className="px-3 py-2 text-gray-400 whitespace-nowrap">
+                    {new Date(request.created_at).toLocaleString("en-GB", {
+                      timeStyle: "short",
+                      dateStyle: "short",
+                    })}
+                  </td>
+                  <td className="px-3 py-2 text-gray-700">{request.name}</td>
+                  <td className="px-3 py-2 text-gray-500">{request.email}</td>
+                  <td className="px-3 py-2 text-gray-500">{request.company}</td>
+                  <td className="px-3 py-2 text-gray-500">{request.role}</td>
+                  <td className="px-3 py-2">
+                    <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-700">
+                      {request.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <section>
         <h2 className="font-semibold mb-3 text-sm uppercase tracking-wider text-gray-500">
           Latest 100 Request Events

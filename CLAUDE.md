@@ -13,6 +13,7 @@ Prefer this over older assumptions.
 - Local branches currently present: `feature/claude-build-001`, `main`
 - There is no local `staging` branch at the moment.
 - Recent branch history includes:
+  - `2cdd921` - `feat: add profile json database webhooks`
   - `4930488` - `chore: sync remote Supabase migrations`
   - `e7668c6` - `chore: harden Supabase onboarding config`
   - `2004380` - `docs: add Codex onboarding handoff`
@@ -62,6 +63,7 @@ Public routes currently implemented:
 - `/agent-read/[slug]`
 - `/api/agent-read/[slug]`
 - `/api/search?q=...`
+- `/api/access-request`
 - `/join`
 - `/join/[token]`
 - `/join/[token]/signup`
@@ -101,11 +103,15 @@ Admin routes currently implemented:
 - Canonical URLs are built in `src/lib/canonical.ts`.
 - Public article HTML is server-rendered and sanitized before render.
 - Search and admin mutation routes are rate-limited.
+- `/join` now includes a real invite-token entry form.
+- Gated `/project` now includes an invite-token entry form.
+- `/join` now includes a real access-request form backed by Supabase.
 - The profile/org graph routes are now in the app and backed by:
   - `members`
   - `orgs`
   - `accounts`
   - `member_domains`
+  - `access_requests`
 
 ## Supabase State
 
@@ -118,6 +124,7 @@ Admin routes currently implemented:
   - `20260507230140_create_football_stats_tables.sql`
   - `20260509234923_onboarding_member_graph_foundation.sql`
   - `20260510123000_add_profile_json.sql`
+  - `20260510204031_add_access_requests.sql`
 - The onboarding/profile migrations have been applied to the hosted project.
 
 ### Important contamination note
@@ -246,6 +253,7 @@ src/app/c/[category]/page.tsx
 src/app/c/[category]/data.json/route.ts
 src/app/agent-read/[slug]/route.ts
 src/app/api/search/route.ts
+src/app/api/access-request/route.ts
 src/app/join/page.tsx
 src/app/join/[token]/page.tsx
 src/app/join/[token]/signup/page.tsx
@@ -270,6 +278,8 @@ src/app/admin/upload/page.tsx
 src/components/ArticleEditor.tsx
 src/components/JoinSignupForm.tsx
 src/components/OnboardingContributionForm.tsx
+src/components/InviteTokenForm.tsx
+src/components/AccessRequestForm.tsx
 
 src/proxy.ts
 src/lib/articles.ts
@@ -285,6 +295,7 @@ src/lib/onboarding-store.ts
 src/lib/onboarding-cookie.ts
 src/lib/profile-json.ts
 src/lib/member-graph.ts
+src/lib/access-requests.ts
 
 supabase/config.toml
 supabase/functions/generate-profile-json/index.ts

@@ -96,6 +96,20 @@ export interface RequestEvent {
   status_code?: number | null;
 }
 
+export interface AccessRequest {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  name: string;
+  email: string;
+  company: string;
+  role: string;
+  source_path: string;
+  invite_token?: string | null;
+  status: "new" | "reviewed" | "invited" | "rejected";
+  notes: string;
+}
+
 export type RouteType =
   | "home"
   | "about"

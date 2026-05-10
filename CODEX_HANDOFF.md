@@ -14,6 +14,7 @@ Read this after:
 - Repo: `https://github.com/dkfinkbone/signal.lab.git`
 - Active branch: `feature/claude-build-001`
 - Recent branch history includes:
+  - `2cdd921` - `feat: add profile json database webhooks`
   - `4930488` - `chore: sync remote Supabase migrations`
   - `e7668c6` - `chore: harden Supabase onboarding config`
   - `2004380` - `docs: add Codex onboarding handoff`
@@ -124,6 +125,23 @@ This migration adds:
 These now POST to:
 - `https://imeppcpuwibvvyxmhiwo.supabase.co/functions/v1/generate-profile-json`
 
+### 7. Join/access UX is now usable
+
+Codex also added a real token-entry and access-request layer:
+
+- `/join` now includes:
+  - token input that routes to `/join/[token]`
+  - token input that can open `/project?token=...`
+  - a real access-request form
+- `/project` gated view now includes:
+  - token input so the user does not have to hand-edit the URL
+- new API route:
+  - `/api/access-request`
+- new Supabase table:
+  - `access_requests`
+- new migration:
+  - `20260510204031_add_access_requests.sql`
+
 ## Current behavior
 
 ### Minimal invite model
@@ -139,6 +157,10 @@ This is still the pilot/testing bridge and should later be replaced by:
 - `invite_events`
 - invite APIs
 - invite analytics/dashboard wiring
+
+Separate from the invite-token bridge:
+- `/join` now records access requests into `access_requests`
+- `/admin/dashboard` now shows the latest access requests
 
 ### Auth flow
 

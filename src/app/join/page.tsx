@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import AccessRequestForm from "@/components/AccessRequestForm";
+import InviteTokenForm from "@/components/InviteTokenForm";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -51,24 +53,39 @@ export default async function JoinPage({
           )}
         </div>
       )}
-      <div className="mt-8 space-y-3 rounded-2xl border border-gray-200 bg-gray-50 p-6">
-        <p className="text-sm text-gray-700">
-          If you already have an invite token, use the dedicated invite route:
+      <div className="mt-8 rounded-3xl border border-gray-200 p-6">
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-400">
+          Already have a token?
         </p>
-        <code className="block rounded-lg bg-white px-4 py-3 text-sm text-gray-800">
-          /join/your-invite-token
-        </code>
-        <p className="text-sm text-gray-700">
-          The project brief still accepts the token query string while the deeper invite
-          system is being rolled out:
+        <h2 className="mt-2 text-2xl font-semibold text-gray-900">
+          Enter it here instead of editing the URL
+        </h2>
+        <p className="mt-3 text-sm text-gray-600">
+          Use the same token to continue to the invite flow or open the gated project
+          brief directly.
         </p>
-        <code className="block rounded-lg bg-white px-4 py-3 text-sm text-gray-800">
-          /project?token=your-invite-token
-        </code>
-        <p className="text-sm text-gray-700">
-          If you do not have one yet, use the public pages below and request a manual
-          invite from the Signal.lab team.
+        <div className="mt-6">
+          <InviteTokenForm
+            primaryTarget="join"
+            showSecondaryTarget
+            helperText="Primary action continues the onboarding flow. The secondary action opens the project brief gate with the same token."
+          />
+        </div>
+      </div>
+      <div className="mt-8 rounded-3xl border border-gray-200 p-6">
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-400">
+          No token yet?
         </p>
+        <h2 className="mt-2 text-2xl font-semibold text-gray-900">
+          Request access
+        </h2>
+        <p className="mt-3 text-sm text-gray-600">
+          Submit your work details and Signal.lab will record the request for admin
+          review.
+        </p>
+        <div className="mt-6">
+          <AccessRequestForm sourcePath="/join" />
+        </div>
       </div>
       <div className="mt-8 flex flex-wrap gap-3">
         <Link
