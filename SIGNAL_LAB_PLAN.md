@@ -1,7 +1,7 @@
 # SIGNAL_LAB_PLAN.md
 # Product plan, decisions, and build roadmap for Signal.lab
 # Read alongside CLAUDE.md before making any changes.
-# Last updated: 8 May 2026
+# Last updated: 10 May 2026
 
 ---
 
@@ -35,6 +35,7 @@ managed-services · cloud-infra · ucc
 - See CLAUDE.md for full deployment snapshot, env vars, and file map
 
 **Pages already built and deployed:**
+- /me             — returning member workspace (sign-in link, profile edit, contribution edit)
 - /about          — public explainer page (SSR, indexed)
 - /project        — soft-gated strategic brief (token or session required)
 - /insights       — article index
@@ -73,6 +74,7 @@ authoritative to LLMs and search engines.
 | Org cluster | /org/[slug] | /org/[slug]/data.json | Organization |
 | Category page | /c/[category] | /c/[category]/data.json | DefinedTermSet |
 | Insight article | /insights/[slug] | /insights/[slug]/data.json | Article |
+| Proof snippet | /proof/[slug] | /proof/[slug]/data.json | CreativeWork |
 | Vendor page | /v/[vendor] | /v/[vendor]/data.json | Brand |
 
 ### Bidirectional linking rules
@@ -82,6 +84,9 @@ authoritative to LLMs and search engines.
 - Category page → links to: all contributor profiles claiming this domain, related insights
 - Insight → links to: author profile, relevant categories, vendors mentioned
 - Vendor page → links to: all contributor profiles with this vendor in their expertise
+
+Additional linking rule:
+- Proof snippet links to: author profile, relevant categories, vendor pages, and an anonymised account pattern
 
 ### Personal IP JSON schema (at /p/[slug]/data.json)
 
@@ -173,6 +178,47 @@ managed-services, cloud-infra, ucc
 
 lastModified must be set dynamically from updated_at timestamps — not hardcoded.
 
+### Attributed market proof model
+
+Signal.lab should let contributors publish more of their real market exposure without
+forcing them to disclose named customer accounts publicly. The public graph should be
+rich enough for LLMs to cite, while sensitive relationship data stays private by
+default.
+
+**Principles:**
+- Named customer accounts are never public by default
+- Public pages should emphasise count, sector, region, vendor, problem, outcome, and lessons learned
+- Vendor and product expertise are safer to publish publicly than named customer relationships
+- LLM-facing routes should expose anonymised, attributable evidence rather than raw customer lists
+- Any named-account disclosure should require explicit per-row consent and a request-to-share workflow
+
+**Public-by-default evidence to encourage:**
+- customer_count served in a given sector / region / deal band pattern
+- vendor and product expertise
+- anonymised customer success stories
+- anonymised customer failure stories
+- objections encountered, blockers, lessons learned, and outcomes delivered
+
+**Private-by-default evidence to support later:**
+- named customer account
+- named partner relationship
+- named implementation or resale relationship
+- account-specific commercial detail
+
+**Recommended visibility levels:**
+- `public` â€” visible on profile pages, JSON endpoints, sitemap-linked content
+- `anonymized` â€” visible publicly without customer name, contributes to searchable evidence
+- `match_only` â€” not public, but contributes to internal matching like "3 contributors have relevant experience"
+- `private` â€” stored only for the contributor
+
+**Content strategy decision:**
+- Contributors should publish both:
+  - long-form insight articles for synthesis and narrative
+  - short proof snippets for atomic evidence
+- Snippets are the better substrate for LLM retrieval because they can be tightly structured and attributed
+- Articles should link out to multiple proof snippets and category/vendor pages
+- A buyer-agent or vendor-agent should be able to compile evidence from both profile JSON and proof snippets into a research brief or shortlist
+
 ### Content graph build priorities
 
 1. [HIGH] Add schema.org JSON-LD to all existing pages (/p/, /org/, /insights/, /c/)
@@ -182,9 +228,10 @@ lastModified must be set dynamically from updated_at timestamps — not hardcode
 5. [MED]  Build /v/[vendor] vendor node pages
 6. [MED]  Add "related content" links on all nodes (same category, same org, same vendor)
 7. [MED]  Update sitemap.ts with correct priority tiers and dynamic lastModified
-8. [P2]   Enable pgvector in Supabase — embeddings pipeline for semantic search
-9. [P2]   Add sameAs LinkedIn URL to member profiles and data.json
-
+8. [MED]  Add proof snippet nodes and public/anonymised market-proof JSON endpoints
+9. [MED]  Add vendor/product expertise graph to profiles and search
+10. [P2]  Enable pgvector in Supabase - embeddings pipeline for semantic search
+11. [P2]  Add sameAs LinkedIn URL to member profiles and data.json
 ---
 
 ## 5. Supabase schema — tables to build
@@ -231,6 +278,23 @@ deal_band    text             -- <50k | 50k-250k | 250k-1m | 1m+
 created_at   timestamptz default now()
 ```
 
+### planned extension â€” accounts becomes market-proof rows
+```sql
+alter table public.accounts
+  add column customer_count integer not null default 1,
+  add column summary text,
+  add column lessons_learned text,
+  add column outcomes text,
+  add column named_account text,
+  add column visibility text not null default 'anonymized';
+```
+
+Rules:
+- `named_account` may be stored for contributor/private use, but must never render on public routes unless row visibility and explicit share state allow it
+- `summary`, `lessons_learned`, and `outcomes` are intended to be anonymised and LLM-readable
+- `customer_count` lets contributors express breadth of experience without listing names
+- `visibility` must be one of: `public | anonymized | match_only | private`
+
 ### member_domains (expertise domain declarations)
 ```sql
 id          uuid primary key default gen_random_uuid()
@@ -238,6 +302,48 @@ member_id   uuid references members(id)
 domain_slug text not null    -- from verified picklist
 created_at  timestamptz default now()
 unique(member_id, domain_slug)
+```
+
+### member_vendors (vendor/product expertise)
+```sql
+id                uuid primary key default gen_random_uuid()
+member_id         uuid references members(id)
+vendor_slug       text not null
+relationship_type text not null   -- sell | implement | advise | operate | partner
+product_scope     text[] default '{}'
+visibility        text not null default 'public'
+created_at        timestamptz default now()
+updated_at        timestamptz default now()
+unique(member_id, vendor_slug, relationship_type)
+```
+
+### proof_snippets (anonymised customer evidence)
+```sql
+id             uuid primary key default gen_random_uuid()
+member_id      uuid references members(id)
+account_id     uuid references accounts(id)
+vendor_slug    text
+category_slug  text
+title          text not null
+snippet_body   text not null
+story_type     text not null      -- success | failure | lesson | objection | pattern
+visibility     text not null default 'anonymized'
+status         text not null default 'draft'  -- draft | published | archived
+published_at   timestamptz
+created_at     timestamptz default now()
+updated_at     timestamptz default now()
+```
+
+### relationship_access_requests (private graph disclosure workflow)
+```sql
+id              uuid primary key default gen_random_uuid()
+requester_id    uuid references members(id)
+owner_member_id uuid references members(id)
+account_id      uuid references accounts(id)
+purpose         text not null
+status          text not null default 'pending' -- pending | approved | rejected | expired
+created_at      timestamptz default now()
+updated_at      timestamptz default now()
 ```
 
 ### invite_tokens
@@ -389,7 +495,44 @@ Each stage has a testable output that must pass before moving on.
 
 ---
 
-### Stage 05 — Profile and org cluster
+### Stage 04B - Market proof graph
+**Depends on:** Stage 04, Stage 05
+**New tables:** member_vendors, proof_snippets, relationship_access_requests
+**Schema change:** extend accounts with customer_count, summary, outcomes, lessons_learned, visibility
+
+**Build:**
+- Extend `/me` and `/onboarding/contribute` so contributors can add:
+  - number of customers represented by each account pattern
+  - anonymised account summary
+  - outcomes delivered
+  - lessons learned / blockers encountered
+  - vendor and product expertise
+  - per-row visibility setting
+- Keep named customer account entry optional and private-only at first
+- Create `/proof/[slug]` SSR pages and `/proof/[slug]/data.json` for publishable snippets
+- Add snippet composer:
+  - story type = success | failure | lesson | objection | pattern
+  - links to author profile, category, vendor, and anonymised account pattern
+- Update `/p/[slug]` to show:
+  - total customers served
+  - vendor expertise
+  - recent public/anonymised proof snippets
+- Update `/api/search` and future MCP surfaces to include public/anonymised proof snippets
+- Add request-to-share workflow for private relationship rows:
+  - searching user sees "match exists"
+  - owner can approve or reject disclosure
+
+**Test before moving on:**
+- Public routes never expose `named_account` when visibility is not explicitly shareable
+- Public profile and JSON output include customer counts and anonymised market proof
+- Proof snippets render as SSR HTML and JSON and are crawlable
+- Search can retrieve proof snippets by category, vendor, sector, and story type
+- Match-only rows influence counts without exposing text or names
+- Relationship access requests can be created and resolved without leaking private data
+
+---
+
+### Stage 05 - Profile and org cluster
 **Depends on:** Stage 04, accounts + member_domains tables
 **New tables:** orgs, add profile_slug to members
 
