@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
+import { ARTICLE_SELECT_COLUMNS } from "@/lib/article-write";
 import { getServiceClient } from "@/lib/supabase-service";
 import ArticleEditor from "@/components/ArticleEditor";
+import type { Article } from "@/types";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -19,11 +21,12 @@ export default async function EditArticlePage({ params }: Props) {
   }
 
   const client = getServiceClient();
-  const { data: article } = await client
+  const { data } = await client
     .from("articles")
-    .select("*")
+    .select(ARTICLE_SELECT_COLUMNS)
     .eq("id", id)
     .single();
+  const article = data as Article | null;
 
   if (!article) notFound();
 

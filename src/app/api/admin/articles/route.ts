@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { pickArticleWritePayload } from "@/lib/article-write";
 import { getServiceClient } from "@/lib/supabase-service";
 import { articleCanonical } from "@/lib/canonical";
 import { enforceRateLimit } from "@/lib/rate-limit";
@@ -11,7 +12,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body = await req.json();
+    const body = pickArticleWritePayload(await req.json());
     const client = getServiceClient();
 
     if (typeof body.full_body === "string") {

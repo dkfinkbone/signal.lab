@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { pickArticleWritePayload } from "@/lib/article-write";
 import { getServiceClient } from "@/lib/supabase-service";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { sanitizeHtml } from "@/lib/sanitize-html";
@@ -14,8 +15,10 @@ export async function PATCH(
   }
 
   try {
-    const body = await req.json();
-    body.updated_at = new Date().toISOString();
+    const body = {
+      ...pickArticleWritePayload(await req.json()),
+      updated_at: new Date().toISOString(),
+    };
     if (typeof body.full_body === "string") {
       body.full_body = sanitizeHtml(body.full_body);
     }
