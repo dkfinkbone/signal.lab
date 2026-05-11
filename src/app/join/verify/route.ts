@@ -8,6 +8,7 @@ import {
 } from "@/lib/onboarding-cookie";
 import { createSupabaseAuthServerClient } from "@/lib/supabase-auth-server";
 import {
+  getMemberByEmail,
   getOnboardingContextByEmail,
   upsertMemberFromVerifiedDraft,
 } from "@/lib/onboarding-store";
@@ -58,41 +59,64 @@ export async function GET(request: NextRequest) {
   const tokenHash = url.searchParams.get("token_hash");
   const code = url.searchParams.get("code");
   const type = (url.searchParams.get("type") ?? "email") as EmailOtpType;
+  const fallbackDraft = parseOnboardingDraftCookie(
+    request.cookies.get(ONBOARDING_COOKIE_NAME)?.value
+  );
 
   const supabase = await createSupabaseAuthServerClient();
+  let user: User | null = null;
+  let authFailed = false;
 
   if (tokenHash) {
-    const { error } = await supabase.auth.verifyOtp({
+    const { data, error } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
       type,
     });
 
     if (error) {
-      return redirectWithError(request, "verify_failed");
+      authFailed = true;
+    } else {
+      user = data.user ?? null;
     }
   } else if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
-      return redirectWithError(request, "verify_failed");
+      authFailed = true;
+    } else {
+      user = data.user ?? null;
     }
   } else {
     return redirectWithError(request, "verify_failed");
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  if (!user) {
+    const {
+      data: { user: authenticatedUser },
+    } = await supabase.auth.getUser();
+    user = authenticatedUser ?? null;
+  }
 
   if (!user) {
+    if (authFailed && fallbackDraft?.email) {
+      const existingMember = await getMemberByEmail(fallbackDraft.email);
+      if (existingMember?.verified_at) {
+        return redirectWithError(request, "already_verified");
+      }
+    }
+
     return redirectWithError(request, "verify_failed");
   }
 
-  const fallbackDraft = parseOnboardingDraftCookie(
-    request.cookies.get(ONBOARDING_COOKIE_NAME)?.value
-  );
   const draft = resolveDraft(user, fallbackDraft);
 
   if (!draft) {
+    if (authFailed && fallbackDraft?.email) {
+      const existingMember = await getMemberByEmail(fallbackDraft.email);
+      if (existingMember?.verified_at) {
+        return redirectWithError(request, "already_verified");
+      }
+    }
+
     return redirectWithError(request, "verify_failed");
   }
 

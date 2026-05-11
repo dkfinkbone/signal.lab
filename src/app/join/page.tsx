@@ -46,6 +46,13 @@ export default async function JoinPage({
               link from your invite page and try again.
             </p>
           )}
+          {error === "already_verified" && (
+            <p>
+              This verification link looks like it has already been used. If your
+              profile was created successfully, use the returning member sign-in form
+              below to request a fresh login link.
+            </p>
+          )}
           {error === "schema_pending" && (
             <p>
               The onboarding database tables are not live in Supabase yet. The app code
