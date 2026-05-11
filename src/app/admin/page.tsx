@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { getServiceClient } from "@/lib/supabase-service";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminPage() {
   const client = getServiceClient();
 
