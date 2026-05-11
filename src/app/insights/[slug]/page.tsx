@@ -58,19 +58,23 @@ export default async function ArticlePage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <article>
-        <header className="mb-8">
+      <article className="article-shell mx-auto max-w-3xl">
+        <header className="article-header mb-10">
           {article.category && (
             <a
               href={`/c/${encodeURIComponent(article.category)}`}
-              className="text-xs font-semibold uppercase tracking-wider text-blue-600 hover:underline"
+              className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-blue-700 transition hover:bg-blue-100"
             >
               {article.category}
             </a>
           )}
-          <h1 className="text-3xl font-bold mt-2 mb-3">{article.headline}</h1>
-          <p className="text-lg text-gray-600 mb-4">{article.summary}</p>
-          <div className="flex flex-wrap gap-4 text-sm text-gray-500 pb-6 border-b border-gray-100">
+          <h1 className="mt-4 text-4xl font-bold tracking-tight text-slate-950 md:text-5xl">
+            {article.headline}
+          </h1>
+          <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600 md:text-xl">
+            {article.summary}
+          </p>
+          <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-b border-slate-200 pb-8 text-sm text-slate-500">
             {article.author_name && (
               <span>
                 <strong>{article.author_name}</strong>
@@ -91,16 +95,18 @@ export default async function ArticlePage({ params }: Props) {
         </header>
 
         <div
-          className="prose prose-gray max-w-none mb-10"
+          className="article-body mb-12"
           dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.full_body) }}
         />
 
         {article.claim && (
-          <aside className="bg-blue-50 border border-blue-100 rounded-lg p-5 mb-8">
-            <p className="text-sm font-semibold text-blue-800 mb-1">Key Claim</p>
-            <p className="text-blue-900">{article.claim}</p>
+          <aside className="mb-10 rounded-2xl border border-blue-200 bg-blue-50/80 p-6 shadow-sm">
+            <p className="mb-2 text-sm font-semibold uppercase tracking-[0.16em] text-blue-800">
+              Key Claim
+            </p>
+            <p className="text-base leading-8 text-blue-950">{article.claim}</p>
             {article.evidence_source && (
-              <p className="text-xs text-blue-600 mt-2">
+              <p className="mt-3 text-xs uppercase tracking-[0.14em] text-blue-700">
                 Source: {article.evidence_source}
               </p>
             )}
@@ -121,10 +127,10 @@ export default async function ArticlePage({ params }: Props) {
         )}
 
         {article.cta_url && (
-          <div className="border border-gray-200 rounded-lg p-5 mb-8">
+          <div className="mb-10 rounded-2xl border border-slate-200 bg-slate-50 px-6 py-5">
             <a
               href={article.cta_url}
-              className="text-blue-600 font-semibold hover:underline"
+              className="font-semibold text-blue-700 hover:underline"
               rel="noopener"
             >
               {article.cta_label || "Learn more ->"}
@@ -132,7 +138,7 @@ export default async function ArticlePage({ params }: Props) {
           </div>
         )}
 
-        <footer className="pt-6 border-t border-gray-100 text-xs text-gray-400 space-y-1">
+        <footer className="space-y-2 border-t border-slate-200 pt-6 text-xs text-slate-400">
           <p>
             Canonical:{" "}
             <a href={canonical} className="hover:underline">
