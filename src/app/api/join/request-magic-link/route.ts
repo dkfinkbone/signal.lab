@@ -6,7 +6,7 @@ import {
   serializeOnboardingDraft,
   serializeReturnToCookie,
 } from "@/lib/onboarding-cookie";
-import { isInviteTokenAccepted } from "@/lib/invite-tokens";
+import { resolveInviteToken } from "@/lib/invite-tokens";
 import { parseSignupDraft } from "@/lib/onboarding";
 import { enforceRateLimit } from "@/lib/rate-limit";
 
@@ -27,8 +27,22 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (!isInviteTokenAccepted(draft.inviteToken, { allowAnyWhenUnconfigured: true })) {
+  const invite = await resolveInviteToken(draft.inviteToken, {
+    allowAnyWhenUnconfigured: true,
+  });
+
+  if (!invite.accepted) {
     return NextResponse.json({ error: "Invite link not recognised." }, { status: 404 });
+  }
+
+  if (invite.accessRequest && invite.accessRequest.email !== draft.email) {
+    return NextResponse.json(
+      {
+        error:
+          "Use the work email that was approved for this invite, or request a fresh invite.",
+      },
+      { status: 400 }
+    );
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -56,7 +70,7 @@ export async function POST(req: NextRequest) {
         onboarding_name: draft.name,
         onboarding_company: draft.company,
         onboarding_role: draft.role,
-        invite_token: draft.inviteToken,
+        invite_token: invite.token ?? draft.inviteToken,
       },
     },
   });

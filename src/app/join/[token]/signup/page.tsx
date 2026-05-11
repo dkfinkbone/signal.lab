@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import JoinSignupForm from "@/components/JoinSignupForm";
-import { isInviteTokenAccepted } from "@/lib/invite-tokens";
+import { resolveInviteToken } from "@/lib/invite-tokens";
 import { logRequestEventFromHeaders } from "@/lib/log-event";
 import { pageMetadata } from "@/lib/metadata";
 
@@ -33,8 +33,11 @@ export async function generateMetadata({
 export default async function JoinSignupPage({ params }: JoinSignupPageProps) {
   const { token } = await params;
   const inviteToken = decodeURIComponent(token);
+  const invite = await resolveInviteToken(inviteToken, {
+    allowAnyWhenUnconfigured: true,
+  });
 
-  if (!isInviteTokenAccepted(inviteToken, { allowAnyWhenUnconfigured: true })) {
+  if (!invite.accepted) {
     redirect("/join?invite=invalid");
   }
 
@@ -60,7 +63,19 @@ export default async function JoinSignupPage({ params }: JoinSignupPageProps) {
       </p>
 
       <div className="mt-8 rounded-3xl border border-gray-200 p-6">
-        <JoinSignupForm inviteToken={inviteToken} />
+        <JoinSignupForm
+          inviteToken={inviteToken}
+          defaults={
+            invite.accessRequest
+              ? {
+                  name: invite.accessRequest.name,
+                  email: invite.accessRequest.email,
+                  company: invite.accessRequest.company,
+                  role: invite.accessRequest.role,
+                }
+              : undefined
+          }
+        />
       </div>
     </section>
   );

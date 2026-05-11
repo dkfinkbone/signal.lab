@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getServiceClient } from "@/lib/supabase-service";
 import type { AccessRequest, RequestEvent } from "@/types";
 
@@ -228,9 +229,17 @@ export default async function AttributionDashboard() {
 
       {/* Latest 100 events */}
       <section className="mb-10">
-        <h2 className="font-semibold mb-3 text-sm uppercase tracking-wider text-gray-500">
-          Latest Access Requests
-        </h2>
+        <div className="mb-3 flex items-center justify-between gap-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">
+            Latest Access Requests
+          </h2>
+          <Link
+            href="/admin/access-requests"
+            className="text-xs font-medium text-blue-600 hover:underline"
+          >
+            Manage queue
+          </Link>
+        </div>
         <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
           <table className="w-full text-xs">
             <thead className="bg-gray-50 border-b">

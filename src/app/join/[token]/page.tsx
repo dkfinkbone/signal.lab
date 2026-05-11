@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { isInviteTokenAccepted } from "@/lib/invite-tokens";
+import { resolveInviteToken } from "@/lib/invite-tokens";
 import { logRequestEventFromHeaders } from "@/lib/log-event";
 import { pageMetadata } from "@/lib/metadata";
 
@@ -33,8 +33,11 @@ export async function generateMetadata({
 export default async function JoinLandingPage({ params }: JoinLandingPageProps) {
   const { token } = await params;
   const inviteToken = decodeURIComponent(token);
+  const invite = await resolveInviteToken(inviteToken, {
+    allowAnyWhenUnconfigured: true,
+  });
 
-  if (!isInviteTokenAccepted(inviteToken, { allowAnyWhenUnconfigured: true })) {
+  if (!invite.accepted) {
     redirect("/join?invite=invalid");
   }
 

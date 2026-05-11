@@ -5,14 +5,23 @@ import { inferCompanyNameFromEmail } from "@/lib/onboarding";
 
 interface JoinSignupFormProps {
   inviteToken: string;
+  defaults?: {
+    name?: string;
+    email?: string;
+    company?: string;
+    role?: string;
+  };
 }
 
-export default function JoinSignupForm({ inviteToken }: JoinSignupFormProps) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [company, setCompany] = useState("");
-  const [role, setRole] = useState("");
-  const [companyTouched, setCompanyTouched] = useState(false);
+export default function JoinSignupForm({
+  inviteToken,
+  defaults,
+}: JoinSignupFormProps) {
+  const [name, setName] = useState(defaults?.name ?? "");
+  const [email, setEmail] = useState(defaults?.email ?? "");
+  const [company, setCompany] = useState(defaults?.company ?? "");
+  const [role, setRole] = useState(defaults?.role ?? "");
+  const [companyTouched, setCompanyTouched] = useState(Boolean(defaults?.company));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
@@ -72,6 +81,13 @@ export default function JoinSignupForm({ inviteToken }: JoinSignupFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {defaults?.email && (
+        <div className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+          This invite was approved for <strong>{defaults.email}</strong>. Use that work
+          email to continue, or ask an admin for a new invite if it has changed.
+        </div>
+      )}
+
       <div className="grid gap-5 md:grid-cols-2">
         <label className="block">
           <span className="mb-2 block text-sm font-medium text-gray-700">Full name</span>

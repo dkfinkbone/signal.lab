@@ -4,7 +4,7 @@ import Link from "next/link";
 import InviteTokenForm from "@/components/InviteTokenForm";
 import { siteUrl } from "@/lib/canonical";
 import { getAuthenticatedUser } from "@/lib/supabase-auth-server";
-import { isInviteTokenAccepted } from "@/lib/invite-tokens";
+import { resolveInviteToken } from "@/lib/invite-tokens";
 import { logRequestEventFromHeaders } from "@/lib/log-event";
 
 export const metadata: Metadata = {
@@ -42,8 +42,11 @@ export default async function ProjectPage({
   const params = await searchParams;
   const token = params.token ?? null;
   const session = await getSession();
+  const invite = await resolveInviteToken(token, {
+    allowAnyWhenUnconfigured: false,
+  });
   const hasAccess =
-    Boolean(session) || isInviteTokenAccepted(token, { allowAnyWhenUnconfigured: false });
+    Boolean(session) || invite.accepted;
 
   await logRequestEventFromHeaders({
     headers: await headers(),
