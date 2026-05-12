@@ -59,9 +59,28 @@ export async function GET(request: NextRequest) {
   const tokenHash = url.searchParams.get("token_hash");
   const code = url.searchParams.get("code");
   const type = (url.searchParams.get("type") ?? "email") as EmailOtpType;
+  const confirm = url.searchParams.get("confirm") === "1";
   const fallbackDraft = parseOnboardingDraftCookie(
     request.cookies.get(ONBOARDING_COOKIE_NAME)?.value
   );
+
+  if (!tokenHash && !code) {
+    return redirectWithError(request, "verify_failed");
+  }
+
+  if (!confirm) {
+    const destination = new URL("/join/confirm", request.url);
+
+    if (tokenHash) {
+      destination.searchParams.set("token_hash", tokenHash);
+    }
+    if (code) {
+      destination.searchParams.set("code", code);
+    }
+    destination.searchParams.set("type", type);
+
+    return NextResponse.redirect(destination);
+  }
 
   const supabase = await createSupabaseAuthServerClient();
   let user: User | null = null;
@@ -85,8 +104,6 @@ export async function GET(request: NextRequest) {
     } else {
       user = data.user ?? null;
     }
-  } else {
-    return redirectWithError(request, "verify_failed");
   }
 
   if (!user) {

@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
   const { error } = await supabase.auth.signInWithOtp({
     email: member.email ?? payload.email,
     options: {
-      emailRedirectTo: `${siteUrl}/join/verify`,
+      emailRedirectTo: `${siteUrl}/join/confirm`,
       shouldCreateUser: false,
     },
   });

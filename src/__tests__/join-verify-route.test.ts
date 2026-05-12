@@ -62,7 +62,7 @@ describe("join verification callback", () => {
 
   it("redirects to the returning-member path when a consumed link already created the member", async () => {
     const request = createRequest(
-      "https://signal-lab.connxr.com/join/verify?token_hash=used-token&type=signup",
+      "https://signal-lab.connxr.com/join/verify?token_hash=used-token&type=signup&confirm=1",
       serializeOnboardingDraft({
         name: "Duncan Hart",
         email: "duncan.hart@colortokens.com",
@@ -99,7 +99,7 @@ describe("join verification callback", () => {
 
   it("uses the verified user returned by Supabase even before getUser resolves a session", async () => {
     const request = createRequest(
-      "https://signal-lab.connxr.com/join/verify?token_hash=fresh-token&type=signup",
+      "https://signal-lab.connxr.com/join/verify?token_hash=fresh-token&type=signup&confirm=1",
       serializeOnboardingDraft({
         name: "Duncan Hart",
         email: "duncan.hart@colortokens.com",
@@ -149,5 +149,18 @@ describe("join verification callback", () => {
     expect(response.headers.get("location")).toBe(
       "https://signal-lab.connxr.com/onboarding/contribute"
     );
+  });
+
+  it("redirects first-click verification links to the interstitial confirm page", async () => {
+    const request = createRequest(
+      "https://signal-lab.connxr.com/join/verify?token_hash=fresh-token&type=email"
+    );
+
+    const response = await GET(request);
+
+    expect(response.headers.get("location")).toBe(
+      "https://signal-lab.connxr.com/join/confirm?token_hash=fresh-token&type=email"
+    );
+    expect(mocks.createSupabaseAuthServerClient).not.toHaveBeenCalled();
   });
 });
