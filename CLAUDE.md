@@ -1,6 +1,6 @@
 # Signal.lab - Claude Snapshot
 
-Updated: 2026-05-11
+Updated: 2026-05-16
 
 This file is the current build/deploy handoff for Claude and Codex.
 Prefer this over older assumptions.
@@ -41,6 +41,9 @@ Prefer this over older assumptions.
     deployment is stale rather than the canonical helper.
   - `.env.local.example` still contains `https://signal.lab` as a placeholder and
     should not be treated as the live source of truth.
+  - Production was redeployed on `2026-05-16` after the public admin links were removed.
+  - Preview deployments without preview Supabase env parity can render empty
+    article/index pages even when production is healthy.
 
 ## Stack
 
@@ -70,6 +73,7 @@ Public routes currently implemented:
 - `/join`
 - `/join/[token]`
 - `/join/[token]/signup`
+- `/join/confirm`
 - `/join/verify`
 - `/me`
 - `/onboarding/contribute`
@@ -85,10 +89,12 @@ Public routes currently implemented:
 Admin routes currently implemented:
 
 - `/admin`
+- `/admin/access-requests`
 - `/admin/dashboard`
 - `/admin/articles`
 - `/admin/articles/[id]`
 - `/admin/upload`
+- `/api/admin/access-requests/[id]`
 - `/api/admin/articles`
 - `/api/admin/articles/[id]`
 - `/api/admin/bulk-upload`
@@ -100,9 +106,11 @@ Admin routes currently implemented:
   - `About`
   - `Project`
   - `Insights`
-  - `Attribution`
-  - `Admin`
-- Admin access is enforced with HTTP Basic Auth in `src/proxy.ts`.
+  - `Join`
+  - `My Signal`
+- Public site navigation does **not** expose admin or attribution links anymore.
+- Admin access is enforced with HTTP Basic Auth in `src/proxy.ts`, but admin is
+  now intended for direct URL access only.
 - In-app article links are relative and preview-safe.
 - Canonical URLs are built in `src/lib/canonical.ts`.
 - Public article HTML is server-rendered and sanitized before render.
@@ -110,6 +118,8 @@ Admin routes currently implemented:
 - `/join` now includes a real invite-token entry form.
 - Gated `/project` now includes an invite-token entry form.
 - `/join` now includes a real access-request form backed by Supabase.
+- public onboarding/access copy now refers to the Signal.lab team rather than
+  telling the user to contact an admin
 - `/me` now acts as the returning-member workspace:
   - resend sign-in link
   - profile edit
@@ -219,11 +229,18 @@ Admin routes currently implemented:
 - It protects:
   - `/admin/:path*`
   - `/api/admin/:path*`
+- Admin is now entered by direct URL only:
+  - `https://signal-lab.connxr.com/admin`
+  - `https://signal-lab.connxr.com/admin/dashboard`
+- There is no in-app admin login page.
+- The browser Basic Auth prompt is the admin login surface.
 - Exception:
   - `/api/admin/log-event` remains callable without Basic Auth because it is
     protected by `INTERNAL_LOG_SECRET` instead.
 - Admin credentials are stored in local `.env.local` and Vercel project envs.
 - Do not hardcode credentials into source files or docs.
+- Do not reintroduce public links to `/admin*`, or casual visitors may see the
+  browser auth prompt due to navigation/prefetch.
 
 ## Environment Variables
 
@@ -330,8 +347,8 @@ npm run lint
 npm run build
 ```
 
-Current branch test count after the homepage discoverability pass:
-- `77/77` Jest tests passing
+Current branch test count after the public/admin separation and deploy pass:
+- `90/90` Jest tests passing
 
 ## Current Open Issues / Gotchas
 
@@ -344,6 +361,9 @@ Current branch test count after the homepage discoverability pass:
   rerun against the latest deployment to validate them.
 - Preview deployments are still not the right place to judge real
   indexing/citation behavior.
-- Admin uses browser Basic Auth prompts, not an in-app login form.
+- Preview deployments without preview Supabase env vars can show empty article
+  lists or missing article data even when production is healthy.
+- Admin uses browser Basic Auth prompts, not an in-app login form, and is hidden
+  from the public UI.
 - The fetched football migration is not product scope and should be ignored by
   Signal.lab feature work.

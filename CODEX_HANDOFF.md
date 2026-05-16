@@ -1,9 +1,9 @@
 # CODEX_HANDOFF.md
 
-Updated: 2026-05-11
+Updated: 2026-05-16
 
 This file is the current Codex handoff for Claude Code after the hosted
-Supabase onboarding/config pass.
+Supabase onboarding/config pass, public/admin separation, and live redeploy.
 
 Read this after:
 - `CLAUDE.md`
@@ -179,6 +179,31 @@ Codex hardened the landing page against the LLM discoverability scan findings:
     - `<table>`
     - `<details>/<summary>`
 
+### 10. Public/admin separation and live deploy are now complete
+
+Codex removed admin awareness from the public UI and redeployed the app:
+
+- removed public links to `/admin` and `/admin/dashboard` from:
+  - `src/app/layout.tsx`
+  - `src/app/page.tsx`
+- public homepage CTAs now point to:
+  - `/insights`
+  - `/join`
+  - `/me`
+- public/member copy no longer tells users to contact "an admin"; it now refers to
+  the Signal.lab team in:
+  - `src/components/AccessRequestForm.tsx`
+  - `src/components/JoinSignupForm.tsx`
+- updated editorial/upload workflow doc:
+  - `.agents/skills/content-management/publish-article.md`
+  - now requires:
+    - UTF-8 handling
+    - `{ "articles": [...] }` request body for bulk upload
+    - removal of em/en dashes from prose
+    - anti-LLM editorial cleanup before upload
+- deployed to production on `2026-05-16`:
+  - `https://signal-lab.connxr.com`
+
 ## Current behavior
 
 ### Minimal invite model
@@ -198,6 +223,24 @@ This is still the pilot/testing bridge and should later be replaced by:
 Separate from the invite-token bridge:
 - `/join` now records access requests into `access_requests`
 - `/admin/dashboard` now shows the latest access requests
+
+### Admin access
+
+Current admin behavior:
+- public users can browse content, request access, and use `/me` without seeing
+  admin links in the shared site UI
+- admin is entered by direct URL only:
+  - `https://signal-lab.connxr.com/admin`
+  - `https://signal-lab.connxr.com/admin/dashboard`
+- the browser then shows the HTTP Basic Auth challenge from `src/proxy.ts`
+- the credentials are still:
+  - `ADMIN_USERNAME`
+  - `ADMIN_PASSWORD`
+- there is still no in-app admin login screen
+
+Important:
+- if future public pages reintroduce links to `/admin*`, browser auth prompts can
+  resurface because those routes are protected by Basic Auth
 
 ### Auth flow
 
@@ -232,8 +275,8 @@ npm run lint
 npm run build
 ```
 
-Current branch test count after the homepage discoverability pass:
-- `77/77` Jest tests passing
+Current branch test count after the public/admin separation and deploy pass:
+- `90/90` Jest tests passing
 
 Supabase state verified:
 - local and remote migration history are aligned
@@ -256,6 +299,12 @@ Discoverability state verified locally:
 - homepage metadata now includes social and attribution fields
 - homepage JSON-LD now exists
 - homepage extractable FAQ/table/definition-list structure now exists
+
+Deploy state verified:
+- production Vercel env contains the required Supabase public and service-role vars
+- the live site was redeployed on `2026-05-16`
+- preview deployments without preview Supabase env parity can still show empty
+  `/insights` results even when production is healthy
 
 ## Important implementation caveats
 
@@ -313,11 +362,12 @@ the code helper. It means:
 
 ### Immediate next step
 
-Do **not** redo the already-finished Supabase work or the homepage discoverability pass.
+Do **not** redo the already-finished Supabase work, homepage discoverability pass,
+or the public/admin separation change.
 
 Instead:
-1. rerun the homepage/preview discoverability scan against the latest deployment
-2. verify Vercel `NEXT_PUBLIC_SITE_URL` and redeploy if the scan still reports `https://signal.lab`
+1. decide whether preview deployments need full Supabase env parity for article/content review
+2. keep admin as direct-URL-only access; do not reintroduce public admin links
 3. start Stage 04B market-proof graph work from `SIGNAL_LAB_PLAN.md`
 
 ### After that
@@ -345,3 +395,6 @@ Recommended order:
 - Do not assume `PROJECT_INVITE_TOKENS` is the long-term model.
 - Do not assume the invite system tables already exist.
 - Do not assume Vercel `NEXT_PUBLIC_SITE_URL` is already corrected unless verified.
+- Do not assume preview deployments have the same Supabase env coverage as production.
+- Do not assume public users should see admin links.
+- Do not assume admin uses an in-app login form.

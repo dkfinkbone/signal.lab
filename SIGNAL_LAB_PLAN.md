@@ -1,7 +1,7 @@
 # SIGNAL_LAB_PLAN.md
 # Product plan, decisions, and build roadmap for Signal.lab
 # Read alongside CLAUDE.md before making any changes.
-# Last updated: 11 May 2026
+# Last updated: 16 May 2026
 
 ---
 
@@ -40,6 +40,13 @@ managed-services · cloud-infra · ucc
 - The landing page now includes extractable `<dl>`, `<table>`, and `<details>/<summary>` content aimed at buyer and agent queries
 - If a crawler scan still reports `https://signal.lab`, the active Vercel `NEXT_PUBLIC_SITE_URL` or deployment is stale rather than the code path
 
+**Public/admin separation state:**
+- Public navigation now exposes `About`, `Project`, `Insights`, `Join`, and `My Signal`
+- Public navigation no longer exposes admin or attribution links
+- Admin remains at `/admin/*` behind HTTP Basic Auth, but is now a direct-URL-only flow
+- Production was redeployed on 16 May 2026 after this change
+- Preview deployments without preview Supabase env parity may show empty article lists even when production is healthy
+
 **Pages already built and deployed:**
 - /me             — returning member workspace (sign-in link, profile edit, contribution edit)
 - /about          — public explainer page (SSR, indexed)
@@ -49,7 +56,7 @@ managed-services · cloud-infra · ucc
 - /t/[slug]       — teaser page
 - /c/[category]   — category page
 - /agent-read/[slug] — JSON view
-- /admin/*        — admin dashboard, articles, upload (Basic Auth)
+- /admin/*        — admin dashboard, articles, upload (Basic Auth, direct URL only, not linked from public nav)
 - /sitemap.xml · /robots.txt · /llms.txt
 
 ---
@@ -64,6 +71,7 @@ managed-services · cloud-infra · ucc
 6. No hardcoded credentials in source files.
 7. npm test && npm run lint && npm run build must pass before every commit.
 8. Public trust pages should expose extractable structure, not just marketing copy. Prefer visible FAQs, definition lists, and tables when they materially help buyer and agent retrieval.
+9. Public/member-facing surfaces must not link to `/admin*`. Keep admin access separate so casual visitors never see browser Basic Auth prompts or public admin affordances.
 
 ---
 
@@ -1048,6 +1056,7 @@ PHASE 3:
 | 8 May 2026 | SIGNAL_LAB_PLAN.md consolidated and written for Codex handoff |
 | 10 May 2026 | Market-proof graph and proof-of-reach roadmap added |
 | 11 May 2026 | Homepage trust/discoverability work landed: JSON-LD, richer metadata, and extractable FAQ/table/definition-list content |
+| 16 May 2026 | Public admin links removed from the shared UI, admin made direct-URL-only, and production redeployed |
 
 ---
 
