@@ -63,8 +63,8 @@ export default function AccessRequestForm({ sourcePath }: AccessRequestFormProps
           Access request saved for {submittedEmail}
         </h2>
         <p className="mt-3 text-sm text-gray-700">
-          Your request is now stored in Signal.lab. A network admin can review it and
-          issue an invite token from there.
+          Your request is now stored in Signal.lab. The Signal.lab team can review it
+          and send the next step from there.
         </p>
       </div>
     );
@@ -128,8 +128,8 @@ export default function AccessRequestForm({ sourcePath }: AccessRequestFormProps
       </div>
 
       <div className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
-        Use your work email. Access requests are stored for admin review so an invite
-        token can be issued later.
+        Use your work email. Access requests are reviewed by the Signal.lab team so an
+        invite token can be issued later.
       </div>
 
       {error && (

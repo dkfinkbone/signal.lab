@@ -84,7 +84,7 @@ export default function JoinSignupForm({
       {defaults?.email && (
         <div className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
           This invite was approved for <strong>{defaults.email}</strong>. Use that work
-          email to continue, or ask an admin for a new invite if it has changed.
+          email to continue, or request a new invite if it has changed.
         </div>
       )}
 

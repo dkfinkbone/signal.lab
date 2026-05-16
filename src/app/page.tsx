@@ -46,16 +46,16 @@ export default async function HomePage() {
             Browse Insights
           </Link>
           <Link
-            href="/admin/dashboard"
+            href="/join"
             className="inline-flex items-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
-            Open Attribution Dashboard
+            Request Access
           </Link>
           <Link
-            href="/admin"
+            href="/me"
             className="inline-flex items-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
-            Open Admin
+            Open My Signal
           </Link>
         </div>
       </section>

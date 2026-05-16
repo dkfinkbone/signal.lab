@@ -72,14 +72,11 @@ export default function RootLayout({
               <Link href="/project" className="text-gray-600 hover:text-blue-600">
                 Project
               </Link>
+              <Link href="/join" className="text-gray-600 hover:text-blue-600">
+                Join
+              </Link>
               <Link href="/me" className="text-gray-600 hover:text-blue-600">
                 My Signal
-              </Link>
-              <Link href="/admin/dashboard" className="text-gray-600 hover:text-blue-600">
-                Attribution
-              </Link>
-              <Link href="/admin" className="text-gray-600 hover:text-blue-600">
-                Admin
               </Link>
             </div>
           </nav>
