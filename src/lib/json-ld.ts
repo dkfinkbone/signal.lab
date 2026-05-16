@@ -9,6 +9,35 @@ import {
 } from "./canonical";
 import { sanitizeHtml } from "./sanitize-html";
 
+export const HOME_META_DESCRIPTION =
+  "Signal.lab structures verified human expertise and trusted relationships so AI agents can make deterministic discoveries. The expertise graph for agentic business processes.";
+
+export const HOME_ORGANIZATION_DESCRIPTION =
+  "Signal.lab is a trust graph for agentic business processes. It structures verified human expertise, relationship proximity, and proof of execution so that AI agents and human buyers can make deterministic discoveries.";
+
+export const HOME_FAQ_ITEMS = [
+  {
+    question: "What is Signal.lab?",
+    answer:
+      "Signal.lab is a trust graph that makes verified human expertise and professional relationships queryable by AI agents and human buyers. Contributors publish structured expertise, categories, account patterns, and proof snippets, which agents can resolve to a named, verified person with a direct contact path.",
+  },
+  {
+    question: "Who is Signal.lab for?",
+    answer:
+      "Signal.lab is built for channel sellers, consultants, vendor specialists, and the buyers and AI agents who need to find them. It is the structured layer that sits between LLM generation and human execution.",
+  },
+  {
+    question: "How is Signal.lab different from LinkedIn or a directory?",
+    answer:
+      "Signal.lab is not a social network or a search index. It is structured infrastructure. Every contributor is a callable skill file with verified fields, machine-readable JSON, and a deterministic contact path. Agents can query it programmatically, not just humans browsing a page.",
+  },
+  {
+    question: "How does Signal.lab prove discoverability?",
+    answer:
+      "Signal.lab exposes llms.txt, sitemap.xml, a public search API at /api/search, and structured JSON profile endpoints. Every piece of content is attributed to its contributor and indexed by search engines and LLM agents.",
+  },
+] as const;
+
 export function articleJsonLd(article: Article): object {
   const canonicalUrl = article.canonical_url || articleCanonical(article.slug);
 
@@ -49,16 +78,14 @@ export function homeJsonLd(): object {
         "@id": `${baseUrl}#organization`,
         name: "Signal.lab",
         url: baseUrl,
-        description:
-          "Agent-readable publishing platform for attributable expert knowledge in B2B technology.",
+        description: HOME_ORGANIZATION_DESCRIPTION,
       },
       {
         "@type": "WebSite",
         "@id": `${baseUrl}#website`,
         url: baseUrl,
         name: "Signal.lab",
-        description:
-          "Crawlable expert knowledge nodes for buyers, search engines, and LLM agents.",
+        description: HOME_META_DESCRIPTION,
         publisher: {
           "@id": `${baseUrl}#organization`,
         },
@@ -70,44 +97,14 @@ export function homeJsonLd(): object {
       },
       {
         "@type": "FAQPage",
-        mainEntity: [
-          {
-            "@type": "Question",
-            name: "What should contributors publish on Signal.lab?",
-            acceptedAnswer: {
-              "@type": "Answer",
-              text:
-                "Contributors should publish category expertise, proof snippets, customer-pattern evidence, and longer articles that synthesize lessons learned.",
-            },
+        mainEntity: HOME_FAQ_ITEMS.map((item) => ({
+          "@type": "Question",
+          name: item.question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: item.answer,
           },
-          {
-            "@type": "Question",
-            name: "Can buyers and LLM agents attribute expertise back to a real person?",
-            acceptedAnswer: {
-              "@type": "Answer",
-              text:
-                "Yes. Public contributor pages are server-rendered and linked to machine-readable JSON so category expertise, company affiliation, and authored knowledge can be cited back to the contributor.",
-            },
-          },
-          {
-            "@type": "Question",
-            name: "Does Signal.lab expose named customer accounts publicly?",
-            acceptedAnswer: {
-              "@type": "Answer",
-              text:
-                "No. The platform is designed around anonymized market proof by default, so contributors can publish sectors, regions, outcomes, and lessons learned without exposing named customer accounts.",
-            },
-          },
-          {
-            "@type": "Question",
-            name: "How does Signal.lab prove discoverability to contributors?",
-            acceptedAnswer: {
-              "@type": "Answer",
-              text:
-                "Signal.lab logs crawler visits and is designed to surface indexing, impression, click, and contact evidence so contributors can see whether their pages are being discovered and acted on.",
-            },
-          },
-        ],
+        })),
       },
     ],
   };

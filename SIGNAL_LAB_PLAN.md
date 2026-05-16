@@ -1,7 +1,7 @@
 # SIGNAL_LAB_PLAN.md
 # Product plan, decisions, and build roadmap for Signal.lab
 # Read alongside CLAUDE.md before making any changes.
-# Last updated: 16 May 2026
+# Last updated: 17 May 2026
 
 ---
 
@@ -30,26 +30,32 @@ managed-services · cloud-infra · ucc
 
 - Live at: https://signal-lab.connxr.com
 - Stack: Next.js 16.2.4 · TypeScript · Tailwind CSS 4 · Supabase Postgres · Vercel
-- Branch: feature/claude-build-001
+- Branch: main
 - NEXT_PUBLIC_SITE_URL: https://signal-lab.connxr.com
 - See CLAUDE.md for full deployment snapshot, env vars, and file map
 
 **Homepage discoverability state:**
 - `/` now ships WebSite + Organization + FAQ JSON-LD for machine parsing
 - Shared metadata now emits canonical, Open Graph, Twitter card, author, creator, and publisher fields
-- The landing page now includes extractable `<dl>`, `<table>`, and `<details>/<summary>` content aimed at buyer and agent queries
+- `/` is now a five-section landing page with all meaningful copy server-rendered
+- The homepage still exposes visible FAQ, category-link, and crawler-link surfaces for buyer, crawler, and agent retrieval
+- The footer claim state currently links to `/join/[token]` until `/claim/[token]` exists
 - If a crawler scan still reports `https://signal.lab`, the active Vercel `NEXT_PUBLIC_SITE_URL` or deployment is stale rather than the code path
 
 **Public/admin separation state:**
 - Public navigation now exposes `About`, `Project`, `Insights`, `Join`, and `My Signal`
 - Public navigation no longer exposes admin or attribution links
 - Admin remains at `/admin/*` behind HTTP Basic Auth, but is now a direct-URL-only flow
-- Production was redeployed on 16 May 2026 after this change
+- Production was redeployed on 17 May 2026 after the landing-page rebuild
 - Preview deployments without preview Supabase env parity may show empty article lists even when production is healthy
+
+**Live verification state:**
+- Production checks on 17 May 2026 verified `/`, `/insights`, `/insights/[slug]`, `/c/[category]`, and `/sitemap.xml`
+- The current live Mythos article route is connected through `/c/threat%20research`
 
 **Pages already built and deployed:**
 - /me             — returning member workspace (sign-in link, profile edit, contribution edit)
-- /about          — public explainer page (SSR, indexed)
+- /about          — slim public explainer page (SSR, indexed)
 - /project        — soft-gated strategic brief (token or session required)
 - /insights       — article index
 - /insights/[slug]— full article
@@ -70,7 +76,7 @@ managed-services · cloud-infra · ucc
 5. SUPABASE_SERVICE_ROLE_KEY is server-only. Never import supabase-service.ts in client components.
 6. No hardcoded credentials in source files.
 7. npm test && npm run lint && npm run build must pass before every commit.
-8. Public trust pages should expose extractable structure, not just marketing copy. Prefer visible FAQs, definition lists, and tables when they materially help buyer and agent retrieval.
+8. Public trust pages should expose extractable structure, not just marketing copy. Prefer visible FAQs, definition lists, tables, category links, and machine-surface links when they materially help buyer and agent retrieval.
 9. Public/member-facing surfaces must not link to `/admin*`. Keep admin access separate so casual visitors never see browser Basic Auth prompts or public admin affordances.
 
 ---

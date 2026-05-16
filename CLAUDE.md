@@ -1,6 +1,6 @@
 # Signal.lab - Claude Snapshot
 
-Updated: 2026-05-16
+Updated: 2026-05-17
 
 This file is the current build/deploy handoff for Claude and Codex.
 Prefer this over older assumptions.
@@ -9,16 +9,15 @@ Prefer this over older assumptions.
 
 - Local workspace: `C:\Codex\signal-lab`
 - Git remote: `https://github.com/dkfinkbone/signal.lab.git`
-- Active build branch: `feature/claude-build-001`
-- Local branches currently present: `feature/claude-build-001`, `main`
+- Active build branch: `main`
+- Local branches currently present: `main`, `feature/claude-build-001`
 - There is no local `staging` branch at the moment.
-- Recent branch history includes:
-  - `ea02473` - `docs: add proof of reach roadmap`
-  - `cbb6c13` - `docs: add market proof graph roadmap`
-  - `074959e` - `feat: add returning member workspace`
-  - `36088bb` - `feat: add access request and token entry flow`
-  - `2cdd921` - `feat: add profile json database webhooks`
-  - `30e23a3` - `docs: refresh Claude and Codex handoffs`
+- Recent `main` history includes:
+  - `e4ffdaa` - `feat: hide admin from public UI`
+  - `6e26dcb` - `docs: refresh Claude and Codex handoffs`
+  - `8984383` - `fix: add scanner-safe email verification`
+  - `9ba6f8e` - `fix: handle consumed verification links`
+  - `699e497` - `feat: enable Vercel web analytics`
 
 ## Domain and URL State
 
@@ -41,7 +40,7 @@ Prefer this over older assumptions.
     deployment is stale rather than the canonical helper.
   - `.env.local.example` still contains `https://signal.lab` as a placeholder and
     should not be treated as the live source of truth.
-  - Production was redeployed on `2026-05-16` after the public admin links were removed.
+  - Production was redeployed on `2026-05-17` after the homepage landing-page rebuild.
   - Preview deployments without preview Supabase env parity can render empty
     article/index pages even when production is healthy.
 
@@ -111,6 +110,8 @@ Admin routes currently implemented:
 - Public site navigation does **not** expose admin or attribution links anymore.
 - Admin access is enforced with HTTP Basic Auth in `src/proxy.ts`, but admin is
   now intended for direct URL access only.
+- `/` is now a five-section landing page built from server components plus small
+  decorative client SVG wrappers.
 - In-app article links are relative and preview-safe.
 - Canonical URLs are built in `src/lib/canonical.ts`.
 - Public article HTML is server-rendered and sanitized before render.
@@ -134,10 +135,18 @@ Admin routes currently implemented:
   - Open Graph and Twitter metadata via shared metadata helpers
   - author, creator, and publisher metadata
   - WebSite + Organization + FAQ JSON-LD on `/`
-  - visible extractable structure on `/` using:
-    - `<dl>`
-    - `<table>`
-    - `<details>/<summary>`
+  - a visible homepage FAQ rendered from the same source as the FAQ JSON-LD
+  - visible category links preserved from live article data, with fallback
+    network categories when article data is empty
+  - visible crawler/agent links on `/` to:
+    - `/llms.txt`
+    - `/sitemap.xml`
+    - `/robots.txt`
+    - `/api/search?q=...`
+- The homepage footer claim state now reads `?token=` and links to `/join/[token]`
+  until a dedicated `/claim/[token]` route exists.
+- `/about` is now a shorter distinct SSR explainer route rather than a second
+  long-form landing page.
 
 ## Supabase State
 
@@ -339,7 +348,7 @@ supabase/migrations/
 
 ## Local Verification
 
-These commands currently pass on the active feature branch:
+These commands currently pass on the local `main` workspace:
 
 ```bash
 npm test
@@ -347,7 +356,7 @@ npm run lint
 npm run build
 ```
 
-Current branch test count after the public/admin separation and deploy pass:
+Current branch test count after the landing-page rebuild and production deploy pass:
 - `90/90` Jest tests passing
 
 ## Current Open Issues / Gotchas
@@ -363,7 +372,11 @@ Current branch test count after the public/admin separation and deploy pass:
   indexing/citation behavior.
 - Preview deployments without preview Supabase env vars can show empty article
   lists or missing article data even when production is healthy.
+- `/claim/[token]` does not exist yet. The homepage claim CTA intentionally falls
+  back to `/join/[token]`.
 - Admin uses browser Basic Auth prompts, not an in-app login form, and is hidden
   from the public UI.
+- The local Mythos handoff JSON does not match the current live article category.
+  Production currently links the article under `/c/threat%20research`.
 - The fetched football migration is not product scope and should be ignored by
   Signal.lab feature work.

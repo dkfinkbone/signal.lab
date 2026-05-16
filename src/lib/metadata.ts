@@ -1,6 +1,15 @@
 import type { Metadata } from "next";
 import { articleCanonical, siteUrl } from "./canonical";
+import { HOME_META_DESCRIPTION } from "./json-ld";
 import type { Article } from "@/types";
+
+interface PageMetadataOptions {
+  openGraphTitle?: string;
+  twitterTitle?: string;
+}
+
+export const HOME_PAGE_TITLE = "Signal.lab - Trust networks, queryable";
+export const HOME_OG_TITLE = "Signal.lab - Trusted networks, queryable";
 
 export function articleMetadata(article: Article): Metadata {
   const url = articleCanonical(article.slug);
@@ -31,7 +40,8 @@ export function articleMetadata(article: Article): Metadata {
 export function pageMetadata(
   title: string,
   description: string,
-  canonicalPath: string
+  canonicalPath: string,
+  options: PageMetadataOptions = {}
 ): Metadata {
   const baseUrl = siteUrl();
   const url = `${baseUrl}${canonicalPath}`;
@@ -43,7 +53,7 @@ export function pageMetadata(
     publisher: "Signal.lab",
     alternates: { canonical: url },
     openGraph: {
-      title,
+      title: options.openGraphTitle ?? title,
       description,
       url,
       siteName: "Signal.lab",
@@ -51,8 +61,15 @@ export function pageMetadata(
     },
     twitter: {
       card: "summary_large_image",
-      title,
+      title: options.twitterTitle ?? options.openGraphTitle ?? title,
       description,
     },
   };
+}
+
+export function homePageMetadata(): Metadata {
+  return pageMetadata(HOME_PAGE_TITLE, HOME_META_DESCRIPTION, "/", {
+    openGraphTitle: HOME_OG_TITLE,
+    twitterTitle: HOME_OG_TITLE,
+  });
 }

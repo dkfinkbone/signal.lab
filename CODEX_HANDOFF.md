@@ -1,9 +1,10 @@
 # CODEX_HANDOFF.md
 
-Updated: 2026-05-16
+Updated: 2026-05-17
 
 This file is the current Codex handoff for Claude Code after the hosted
-Supabase onboarding/config pass, public/admin separation, and live redeploy.
+Supabase onboarding/config pass, public/admin separation, landing-page rebuild,
+and live redeploy.
 
 Read this after:
 - `CLAUDE.md`
@@ -12,14 +13,13 @@ Read this after:
 ## Branch state
 
 - Repo: `https://github.com/dkfinkbone/signal.lab.git`
-- Active branch: `feature/claude-build-001`
-- Recent branch history includes:
-  - `ea02473` - `docs: add proof of reach roadmap`
-  - `cbb6c13` - `docs: add market proof graph roadmap`
-  - `074959e` - `feat: add returning member workspace`
-  - `36088bb` - `feat: add access request and token entry flow`
-  - `2cdd921` - `feat: add profile json database webhooks`
-  - `30e23a3` - `docs: refresh Claude and Codex handoffs`
+- Active branch: `main`
+- Recent `main` history includes:
+  - `e4ffdaa` - `feat: hide admin from public UI`
+  - `6e26dcb` - `docs: refresh Claude and Codex handoffs`
+  - `8984383` - `fix: add scanner-safe email verification`
+  - `9ba6f8e` - `fix: handle consumed verification links`
+  - `699e497` - `feat: enable Vercel web analytics`
 
 ## What Codex completed
 
@@ -204,6 +204,48 @@ Codex removed admin awareness from the public UI and redeployed the app:
 - deployed to production on `2026-05-16`:
   - `https://signal-lab.connxr.com`
 
+### 11. Landing-page rebuild and production verification are now complete
+
+Codex completed Task 1 and redeployed the live site:
+
+- rebuilt `src/app/page.tsx` into a five-section landing page
+- added new landing components in:
+  - `src/components/landing/HeroSection.tsx`
+  - `src/components/landing/TrustStackSection.tsx`
+  - `src/components/landing/AudienceLanes.tsx`
+  - `src/components/landing/InsightsFeed.tsx`
+  - `src/components/landing/FooterCTA.tsx`
+  - `src/components/landing/HeroGraphic.tsx`
+  - `src/components/landing/TrustStackGraphic.tsx`
+  - `src/components/landing/VendorGraphic.tsx`
+  - `src/components/landing/BuyerGraphic.tsx`
+- simplified `src/app/about/page.tsx` into a shorter SSR explainer
+- updated home metadata in:
+  - `src/lib/metadata.ts`
+  - `src/lib/json-ld.ts`
+
+Landing-page guardrails that were preserved:
+- all meaningful homepage copy remains in server-rendered HTML
+- homepage still exposes visible FAQ content
+- homepage still exposes visible category links, sourced from live articles with
+  fallback network categories when article data is empty
+- homepage still exposes visible links to:
+  - `/llms.txt`
+  - `/sitemap.xml`
+  - `/robots.txt`
+  - `/api/search?q=...`
+- homepage claim state reads `?token=` and falls back to `/join/[token]` until
+  `/claim/[token]` exists
+
+Production deploy state:
+- deployed to production on `2026-05-17`
+- verified live on:
+  - `/`
+  - `/insights`
+  - `/insights/mythos-gpt-55-cyber-capability-curve`
+  - `/c/threat%20research`
+  - `/sitemap.xml`
+
 ## Current behavior
 
 ### Minimal invite model
@@ -242,6 +284,15 @@ Important:
 - if future public pages reintroduce links to `/admin*`, browser auth prompts can
   resurface because those routes are protected by Basic Auth
 
+### Homepage behavior
+
+Current homepage behavior:
+- `/` is now the dark-field commercial landing page, not the older machine-brief homepage
+- the latest 4 insights are shown on the homepage
+- visible FAQ and crawler/agent surfaces remain on the page
+- `/about` remains live as a distinct SSR explainer page
+- the footer claim state still routes invited users to `/join/[token]`
+
 ### Auth flow
 
 Current auth flow:
@@ -275,7 +326,7 @@ npm run lint
 npm run build
 ```
 
-Current branch test count after the public/admin separation and deploy pass:
+Current branch test count after the landing-page rebuild and production deploy pass:
 - `90/90` Jest tests passing
 
 Supabase state verified:
@@ -298,11 +349,17 @@ The webhook payload assumptions currently expect:
 Discoverability state verified locally:
 - homepage metadata now includes social and attribution fields
 - homepage JSON-LD now exists
-- homepage extractable FAQ/table/definition-list structure now exists
+- homepage extractable FAQ/category/crawler-link structure now exists
 
 Deploy state verified:
 - production Vercel env contains the required Supabase public and service-role vars
-- the live site was redeployed on `2026-05-16`
+- the live site was redeployed on `2026-05-17`
+- production route verification passed for:
+  - `/`
+  - `/insights`
+  - `/insights/mythos-gpt-55-cyber-capability-curve`
+  - `/c/threat%20research`
+  - `/sitemap.xml`
 - preview deployments without preview Supabase env parity can still show empty
   `/insights` results even when production is healthy
 
@@ -358,36 +415,53 @@ the code helper. It means:
 - `NEXT_PUBLIC_SITE_URL` is still stale in Vercel, or
 - the scan is hitting an older deployment
 
+### Claim-flow caveat
+
+The homepage claim state currently falls back to `/join/[token]`.
+
+Reason:
+- `/claim/[token]` does not exist yet
+
+Implication:
+- if Claude implements the claim flow next, it must update the homepage/footer CTA
+  and preserve the current SSR token handling
+
 ## Recommended next sequence for Claude
 
 ### Immediate next step
 
 Do **not** redo the already-finished Supabase work, homepage discoverability pass,
-or the public/admin separation change.
+public/admin separation change, or landing-page rebuild.
 
 Instead:
 1. decide whether preview deployments need full Supabase env parity for article/content review
-2. keep admin as direct-URL-only access; do not reintroduce public admin links
-3. start Stage 04B market-proof graph work from `SIGNAL_LAB_PLAN.md`
+2. keep admin as direct-URL-only access; do not reintroduce public admin links or remove visible homepage crawler/category surfaces
+3. choose the next build between Task 2 claim flow and Stage 04B market-proof graph work
 
 ### After that
 
 Claude should then choose between:
 
-Option A - finish Stage 01 properly
+Option A - build Task 2 claim flow
+- add `/claim/[token]`
+- move homepage/footer claim state off the `/join/[token]` fallback
+- preserve the current SSR token handling on `/`
+
+Option B - finish Stage 01 properly
 - build `invite_tokens`
 - build `invite_events`
 - replace env-token fallback with real token validation
 - add invite analytics to admin dashboard
 
-Option B - build Stage 04B / Stage 04C
+Option C - build Stage 04B / Stage 04C
 - extend `/me` and `/onboarding/contribute` with vendor expertise and anonymised account evidence
 - build `/proof/[slug]` and `/proof/[slug]/data.json`
 - add proof-of-reach/contact workflow surfaces such as `/me/reach`
 
 Recommended order:
-- do Option B first if the priority is contributor value and LLM-attributable market proof
-- do Option A first if the priority is the real invite loop and viral network growth
+- do Option A first if the priority is closing the remaining landing-page claim-state gap
+- do Option C first if the priority is contributor value and LLM-attributable market proof
+- do Option B first if the priority is the real invite loop and viral network growth
 
 ## What Claude should not assume
 
@@ -398,3 +472,6 @@ Recommended order:
 - Do not assume preview deployments have the same Supabase env coverage as production.
 - Do not assume public users should see admin links.
 - Do not assume admin uses an in-app login form.
+- Do not assume `/claim/[token]` already exists.
+- Do not assume the local Mythos handoff JSON category matches production; the live
+  article currently routes under `/c/threat%20research`.
